@@ -74,6 +74,32 @@ class QNetwork(nn.Module):
         return self.layers(x)
 
 
+def select_action(q_net: nn.Module, epsilon: float = 0) -> int:
+    """Select action based on epsilon-greedy policy.
+
+    Parameters
+    ----------
+    q_net : nn.Module
+        An action-value network to find the greedy action.
+    epsilon : float
+        Probability of choosing a random action.
+
+    Returns
+    -------
+    action : int
+        The chosen action.
+    """
+    assert 0 <= epsilon <= 1
+
+    # Random action
+    if random.random() < epsilon:
+        return env.action_space.sample()
+
+    # Greedy action
+    q_values = q_net(torch.FloatTensor(obs))
+    return q_values.argmax().item()
+
+
 def main():
     env = gym.make("CartPole-v0")
     env.seed(RANDOM_SEED)
@@ -88,11 +114,7 @@ def main():
     for i in range(ENV_STEPS):
         # Select and make action
         # TODO(seungjaeryanlee): Anneal epsilon
-        if random.random() < EPSILON:
-            action = env.action_space.sample()
-        else:
-            q_values = q_net(torch.FloatTensor(obs))
-            action = q_values.argmax().item()
+        action = select_action(q_net, EPSILON)
         next_obs, rew, done, info = env.step(action)
 
         # Update replay buffer and train QNetwork
