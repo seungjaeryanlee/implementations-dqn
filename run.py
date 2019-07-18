@@ -1,6 +1,17 @@
 #!/usr/bin/env python
 """Implement Deep Q-Network.
 
+
+You can view runs online via Weights & Biases (wandb):
+https://app.wandb.ai/seungjaeryanlee/implementations-dqn/runs
+
+You can use TensorBoard to view runs offline:
+```
+tensorboard --logdir=runs --port=2223
+```
+
+
+
 Glossary
 --------
 _b  : Batch
@@ -21,6 +32,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from torch.utils.tensorboard import SummaryWriter
 import wandb
 
 
@@ -39,6 +51,9 @@ ch.setFormatter(formatter)
 logger.addHandler(fh)
 logger.addHandler(ch)
 
+# Setup TensorBoard
+writer = SummaryWriter(log_dir="tensorboard_logs")
+
 # Setup wandb
 wandb.init(project="implementations-dqn")
 
@@ -51,7 +66,7 @@ DISCOUNT = 1
 EPSILON_START = 1
 EPSILON_END = 0.1
 EPSILON_DURATION = 5000
-RANDOM_SEED = 0xC0FFEE
+RANDOM_SEED = 3
 TARGET_NETWORK_UPDATE_RATE = 32
 
 random.seed(RANDOM_SEED)
@@ -275,6 +290,7 @@ def main():
                     episode_i, step_i, episode_return
                 )
             )
+            writer.add_scalar('Episode Return', episode_return, episode_i)
             wandb.log({
                 'Episode Return': episode_return,
                 'Episode Count': episode_i,
