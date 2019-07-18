@@ -27,6 +27,7 @@ import random
 from typing import Callable
 from typing import Tuple
 
+import configargparse
 import gym
 import torch
 import torch.nn as nn
@@ -34,6 +35,22 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 import wandb
+
+
+# Setup hyperparameters
+parser = configargparse.ArgParser()
+parser.add('-c', '--config', required=True, is_config_file=True, help='config file path')
+parser.add('--ENV_STEPS', dest='ENV_STEPS', type=int)
+parser.add('--REPLAY_BUFFER_SIZE', dest='REPLAY_BUFFER_SIZE', type=int)
+parser.add('--MIN_REPLAY_BUFFER_SIZE', dest='MIN_REPLAY_BUFFER_SIZE', type=int)
+parser.add('--BATCH_SIZE', dest='BATCH_SIZE', type=int)
+parser.add('--DISCOUNT', dest='DISCOUNT', type=float)
+parser.add('--EPSILON_START', dest='EPSILON_START', type=float)
+parser.add('--EPSILON_END', dest='EPSILON_END', type=float)
+parser.add('--EPSILON_DURATION', dest='EPSILON_DURATION', type=int)
+parser.add('--RANDOM_SEED', dest='RANDOM_SEED', type=int)
+parser.add('--TARGET_NETWORK_UPDATE_RATE', dest='TARGET_NETWORK_UPDATE_RATE', type=int)
+ARGS = parser.parse_args()
 
 
 # Setup logger
@@ -57,20 +74,8 @@ writer = SummaryWriter(log_dir="tensorboard_logs")
 # Setup wandb
 wandb.init(project="implementations-dqn")
 
-# Hyperparameters
-ENV_STEPS = 10000
-REPLAY_BUFFER_SIZE = 1000
-MIN_REPLAY_BUFFER_SIZE = 100
-BATCH_SIZE = 32
-DISCOUNT = 1
-EPSILON_START = 1
-EPSILON_END = 0.1
-EPSILON_DURATION = 5000
-RANDOM_SEED = 3
-TARGET_NETWORK_UPDATE_RATE = 32
-
-random.seed(RANDOM_SEED)
-torch.manual_seed(RANDOM_SEED)
+random.seed(ARGS.RANDOM_SEED)
+torch.manual_seed(ARGS.RANDOM_SEED)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
@@ -236,19 +241,19 @@ def select_action(
 
 def main():
     env = gym.make("CartPole-v0")
-    env.seed(RANDOM_SEED)
+    env.seed(ARGS.RANDOM_SEED)
     obs = env.reset()
 
     q_net = QNetwork(env.observation_space.shape[0], env.action_space.n)
     wandb.watch(q_net)
     target_q_net = copy.deepcopy(q_net)
-    replay_buffer = ReplayBuffer(maxlen=REPLAY_BUFFER_SIZE)
+    replay_buffer = ReplayBuffer(maxlen=ARGS.REPLAY_BUFFER_SIZE)
     optimizer = optim.Adam(q_net.parameters())
-    get_epsilon = get_linear_anneal_func(EPSILON_START, EPSILON_END, EPSILON_DURATION)
+    get_epsilon = get_linear_anneal_func(ARGS.EPSILON_START, ARGS.EPSILON_END, ARGS.EPSILON_DURATION)
 
     episode_return = 0
     episode_i = 0
-    for step_i in range(ENV_STEPS):
+    for step_i in range(ARGS.ENV_STEPS):
         # Select and make action
         epsilon = get_epsilon(step_i)
         action = select_action(env, obs, q_net, epsilon)
@@ -258,20 +263,20 @@ def main():
         replay_buffer.append(
             Transition(obs=obs, action=action, rew=rew, next_obs=next_obs, done=done)
         )
-        if len(replay_buffer) >= MIN_REPLAY_BUFFER_SIZE:
+        if len(replay_buffer) >= ARGS.MIN_REPLAY_BUFFER_SIZE:
             obs_b, action_b, rew_b, next_obs_b, done_b = replay_buffer.get_torch_batch(
-                BATCH_SIZE
+                ARGS.BATCH_SIZE
             )
-            assert obs_b.shape == (BATCH_SIZE, env.observation_space.shape[0])
-            assert action_b.shape == (BATCH_SIZE,)
-            assert rew_b.shape == (BATCH_SIZE,)
-            assert next_obs_b.shape == (BATCH_SIZE, env.observation_space.shape[0])
-            assert done_b.shape == (BATCH_SIZE,)
+            assert obs_b.shape == (ARGS.BATCH_SIZE, env.observation_space.shape[0])
+            assert action_b.shape == (ARGS.BATCH_SIZE,)
+            assert rew_b.shape == (ARGS.BATCH_SIZE,)
+            assert next_obs_b.shape == (ARGS.BATCH_SIZE, env.observation_space.shape[0])
+            assert done_b.shape == (ARGS.BATCH_SIZE,)
 
-            target = rew_b + (1 - done_b) * DISCOUNT * target_q_net(next_obs_b).max(dim=-1)[0]
+            target = rew_b + (1 - done_b) * ARGS.DISCOUNT * target_q_net(next_obs_b).max(dim=-1)[0]
             prediction = q_net(obs_b).gather(1, action_b.unsqueeze(1)).squeeze(1)
-            assert target.shape == (BATCH_SIZE,)
-            assert prediction.shape == (BATCH_SIZE,)
+            assert target.shape == (ARGS.BATCH_SIZE,)
+            assert prediction.shape == (ARGS.BATCH_SIZE,)
 
             td_loss = F.smooth_l1_loss(prediction, target)
             assert td_loss.shape == ()
@@ -280,7 +285,7 @@ def main():
             td_loss.backward()
             optimizer.step()
 
-        if step_i % TARGET_NETWORK_UPDATE_RATE == 0:
+        if step_i % ARGS.TARGET_NETWORK_UPDATE_RATE == 0:
             target_q_net = copy.deepcopy(q_net)
 
         # Logging
