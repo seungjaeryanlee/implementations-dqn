@@ -10,6 +10,7 @@ rew : Reward
 """
 from collections import deque
 from collections import namedtuple
+import logging
 import random
 from typing import Callable
 from typing import Tuple
@@ -20,6 +21,19 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
+
+# Setup logger
+logger = logging.getLogger('main_logger')
+logger.setLevel(logging.DEBUG)
+fh = logging.FileHandler('run.log')
+fh.setLevel(logging.DEBUG)
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s | %(filename)12s | %(levelname)8s | %(message)s')
+fh.setFormatter(formatter)
+ch.setFormatter(formatter)
+logger.addHandler(fh)
+logger.addHandler(ch)
 
 # Hyperparameters
 ENV_STEPS = 10000
@@ -237,7 +251,7 @@ def main():
         episode_return += rew
         if done:
             # TODO(seungjaeryanlee): Use logging and wandb
-            print("Episode {} Return: {}".format(episode_i, episode_return))
+            logger.info("Episode {:4d} Return: {}".format(episode_i, episode_return))
             env.reset()
             episode_return = 0
             episode_i += 1
