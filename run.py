@@ -10,6 +10,7 @@ rew : Reward
 """
 from collections import deque
 from collections import namedtuple
+import copy
 import logging
 import random
 from typing import Callable
@@ -45,6 +46,7 @@ EPSILON_START = 1
 EPSILON_END = 0.1
 EPSILON_DURATION = 5000
 RANDOM_SEED = 0xC0FFEE
+TARGET_NETWORK_UPDATE_RATE = 32
 
 random.seed(RANDOM_SEED)
 torch.manual_seed(RANDOM_SEED)
@@ -209,6 +211,7 @@ def main():
     obs = env.reset()
 
     q_net = QNetwork(env.observation_space.shape[0], env.action_space.n)
+    target_q_net = copy.deepcopy(q_net)
     replay_buffer = ReplayBuffer(maxlen=REPLAY_BUFFER_SIZE)
     optimizer = optim.SGD(q_net.parameters(), lr=0.1)
     get_epsilon = get_linear_anneal_func(EPSILON_START, EPSILON_END, EPSILON_DURATION)
@@ -234,8 +237,7 @@ def main():
             assert rew_b.shape == (BATCH_SIZE,)
             assert next_obs_b.shape == (BATCH_SIZE, env.observation_space.shape[0])
 
-            # TODO(seungjaeryanlee): Use Target QNetwork
-            target = rew_b + DISCOUNT * q_net(next_obs_b).max(dim=-1)[0]
+            target = rew_b + DISCOUNT * target_q_net(next_obs_b).max(dim=-1)[0]
             prediction = q_net(obs_b).gather(1, action_b.unsqueeze(1)).squeeze(1)
             assert target.shape == (BATCH_SIZE,)
             assert prediction.shape == (BATCH_SIZE,)
@@ -246,6 +248,9 @@ def main():
             optimizer.zero_grad()
             td_loss.backward()
             optimizer.step()
+
+        if step_i % TARGET_NETWORK_UPDATE_RATE == 0:
+            target_q_net = copy.deepcopy(q_net)
 
         # Logging
         episode_return += rew
