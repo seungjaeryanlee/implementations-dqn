@@ -217,8 +217,10 @@ def main():
     parser.add("--USE_TENSORBOARD", dest="USE_TENSORBOARD", action="store_true")
     parser.add("--USE_WANDB", dest="USE_WANDB", action="store_true")
     ARGS = parser.parse_args()
-    if not hasattr(ARGS, 'USE_TENSORBOARD'): ARGS.USE_TENSORBOARD = False
-    if not hasattr(ARGS, 'USE_WANDB'): ARGS.USE_WANDB = False
+    if not hasattr(ARGS, "USE_TENSORBOARD"):
+        ARGS.USE_TENSORBOARD = False
+    if not hasattr(ARGS, "USE_WANDB"):
+        ARGS.USE_WANDB = False
 
     print()
     print("+--------------------------------+--------------------------------+")
@@ -234,12 +236,15 @@ def main():
 
     if ARGS.USE_TENSORBOARD:
         from torch.utils.tensorboard import SummaryWriter
+
         writer = SummaryWriter(log_dir="tensorboard_logs")
     if ARGS.USE_WANDB:
         import wandb
+
         wandb.init(project="implementations-dqn", config=ARGS)
 
     # Fix random seeds
+    # TODO(seungjaeryanlee): This is not working!
     make_reproducible(seed=ARGS.RANDOM_SEED, use_random=True, use_torch=True)
 
     # Setup environment
@@ -268,9 +273,7 @@ def main():
         next_obs, rew, done, info = env.step(action)
 
         # Update replay buffer and train QNetwork
-        replay_buffer.append(
-            Transition(obs=obs, action=action, rew=rew, next_obs=next_obs, done=done)
-        )
+        replay_buffer.append(Transition(obs, action, rew, next_obs, done))
         if len(replay_buffer) >= ARGS.MIN_REPLAY_BUFFER_SIZE:
             obs_b, action_b, rew_b, next_obs_b, done_b = replay_buffer.get_torch_batch(
                 ARGS.BATCH_SIZE
