@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 """Implement Deep Q-Network.
 
+https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf
 
-You can view runs online via Weights & Biases (wandb):
+Logging
+-------
+1. You can view runs online via Weights & Biases (wandb):
 https://app.wandb.ai/seungjaeryanlee/implementations-dqn/runs
 
-You can use TensorBoard to view runs offline:
+2. You can use TensorBoard to view runs offline:
 ```
-tensorboard --logdir=runs --port=2223
+tensorboard --logdir=tensorboard_logs --port=2223
 ```
-
-
 
 Glossary
 --------
@@ -19,13 +20,11 @@ env : Environment
 obs : Observation
 rew : Reward
 """
-from collections import deque
-from collections import namedtuple
 import copy
 import logging
 import random
-from typing import Callable
-from typing import Tuple
+from collections import deque, namedtuple
+from typing import Callable, Tuple
 
 import configargparse
 import gym
@@ -33,9 +32,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.utils.tensorboard import SummaryWriter
 import wandb
-
+from torch.utils.tensorboard import SummaryWriter
 
 # Setup hyperparameters
 parser = configargparse.ArgParser()
@@ -298,7 +296,6 @@ def main():
         # Logging
         episode_return += rew
         if done:
-            # TODO(seungjaeryanlee): Use logging and wandb
             logger.info(
                 "Episode {:4d}  Steps {:5d}  Return: {}".format(
                     episode_i, step_i, episode_return
