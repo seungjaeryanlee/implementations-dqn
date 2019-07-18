@@ -21,7 +21,6 @@ obs : Observation
 rew : Reward
 """
 import copy
-import logging
 import random
 from collections import deque, namedtuple
 from typing import Callable, Tuple
@@ -34,6 +33,8 @@ import torch.nn.functional as F
 import torch.optim as optim
 import wandb
 from torch.utils.tensorboard import SummaryWriter
+
+from common import get_logger, make_reproducible
 
 # Setup hyperparameters
 parser = configargparse.ArgParser()
@@ -52,21 +53,7 @@ parser.add("--RANDOM_SEED", dest="RANDOM_SEED", type=int)
 parser.add("--TARGET_NETWORK_UPDATE_RATE", dest="TARGET_NETWORK_UPDATE_RATE", type=int)
 ARGS = parser.parse_args()
 
-
-# Setup logger
-logger = logging.getLogger("main_logger")
-logger.setLevel(logging.DEBUG)
-fh = logging.FileHandler("run.log")
-fh.setLevel(logging.DEBUG)
-ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
-formatter = logging.Formatter(
-    "%(asctime)s | %(filename)12s | %(levelname)8s | %(message)s"
-)
-fh.setFormatter(formatter)
-ch.setFormatter(formatter)
-logger.addHandler(fh)
-logger.addHandler(ch)
+logger = get_logger()
 
 # Setup TensorBoard
 writer = SummaryWriter(log_dir="tensorboard_logs")
@@ -74,10 +61,8 @@ writer = SummaryWriter(log_dir="tensorboard_logs")
 # Setup wandb
 wandb.init(project="implementations-dqn")
 
-random.seed(ARGS.RANDOM_SEED)
-torch.manual_seed(ARGS.RANDOM_SEED)
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = False
+
+make_reproducible(seed=ARGS.RANDOM_SEED)
 
 Transition = namedtuple("Transition", ["obs", "action", "rew", "next_obs", "done"])
 
