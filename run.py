@@ -39,17 +39,19 @@ import wandb
 
 # Setup hyperparameters
 parser = configargparse.ArgParser()
-parser.add('-c', '--config', required=True, is_config_file=True, help='config file path')
-parser.add('--ENV_STEPS', dest='ENV_STEPS', type=int)
-parser.add('--REPLAY_BUFFER_SIZE', dest='REPLAY_BUFFER_SIZE', type=int)
-parser.add('--MIN_REPLAY_BUFFER_SIZE', dest='MIN_REPLAY_BUFFER_SIZE', type=int)
-parser.add('--BATCH_SIZE', dest='BATCH_SIZE', type=int)
-parser.add('--DISCOUNT', dest='DISCOUNT', type=float)
-parser.add('--EPSILON_START', dest='EPSILON_START', type=float)
-parser.add('--EPSILON_END', dest='EPSILON_END', type=float)
-parser.add('--EPSILON_DURATION', dest='EPSILON_DURATION', type=int)
-parser.add('--RANDOM_SEED', dest='RANDOM_SEED', type=int)
-parser.add('--TARGET_NETWORK_UPDATE_RATE', dest='TARGET_NETWORK_UPDATE_RATE', type=int)
+parser.add(
+    "-c", "--config", required=True, is_config_file=True, help="config file path"
+)
+parser.add("--ENV_STEPS", dest="ENV_STEPS", type=int)
+parser.add("--REPLAY_BUFFER_SIZE", dest="REPLAY_BUFFER_SIZE", type=int)
+parser.add("--MIN_REPLAY_BUFFER_SIZE", dest="MIN_REPLAY_BUFFER_SIZE", type=int)
+parser.add("--BATCH_SIZE", dest="BATCH_SIZE", type=int)
+parser.add("--DISCOUNT", dest="DISCOUNT", type=float)
+parser.add("--EPSILON_START", dest="EPSILON_START", type=float)
+parser.add("--EPSILON_END", dest="EPSILON_END", type=float)
+parser.add("--EPSILON_DURATION", dest="EPSILON_DURATION", type=int)
+parser.add("--RANDOM_SEED", dest="RANDOM_SEED", type=int)
+parser.add("--TARGET_NETWORK_UPDATE_RATE", dest="TARGET_NETWORK_UPDATE_RATE", type=int)
 ARGS = parser.parse_args()
 
 
@@ -249,7 +251,9 @@ def main():
     target_q_net = copy.deepcopy(q_net)
     replay_buffer = ReplayBuffer(maxlen=ARGS.REPLAY_BUFFER_SIZE)
     optimizer = optim.Adam(q_net.parameters())
-    get_epsilon = get_linear_anneal_func(ARGS.EPSILON_START, ARGS.EPSILON_END, ARGS.EPSILON_DURATION)
+    get_epsilon = get_linear_anneal_func(
+        ARGS.EPSILON_START, ARGS.EPSILON_END, ARGS.EPSILON_DURATION
+    )
 
     episode_return = 0
     episode_i = 0
@@ -273,7 +277,10 @@ def main():
             assert next_obs_b.shape == (ARGS.BATCH_SIZE, env.observation_space.shape[0])
             assert done_b.shape == (ARGS.BATCH_SIZE,)
 
-            target = rew_b + (1 - done_b) * ARGS.DISCOUNT * target_q_net(next_obs_b).max(dim=-1)[0]
+            target = (
+                rew_b
+                + (1 - done_b) * ARGS.DISCOUNT * target_q_net(next_obs_b).max(dim=-1)[0]
+            )
             prediction = q_net(obs_b).gather(1, action_b.unsqueeze(1)).squeeze(1)
             assert target.shape == (ARGS.BATCH_SIZE,)
             assert prediction.shape == (ARGS.BATCH_SIZE,)
@@ -297,11 +304,11 @@ def main():
                     episode_i, step_i, episode_return
                 )
             )
-            writer.add_scalar('Episode Return', episode_return, episode_i)
-            wandb.log({
-                'Episode Return': episode_return,
-                'Episode Count': episode_i,
-            }, step=step_i)
+            writer.add_scalar("Episode Return", episode_return, episode_i)
+            wandb.log(
+                {"Episode Return": episode_return, "Episode Count": episode_i},
+                step=step_i,
+            )
             env.reset()
             episode_return = 0
             episode_i += 1
