@@ -11,6 +11,7 @@ rew : Reward
 from collections import deque
 from collections import namedtuple
 import random
+from typing import Callable
 
 import gym
 import torch
@@ -25,7 +26,9 @@ REPLAY_BUFFER_SIZE = 1000
 MIN_REPLAY_BUFFER_SIZE = 100
 BATCH_SIZE = 32
 DISCOUNT = 1
-EPSILON = 0.1
+EPSILON_START = 1
+EPSILON_END = 0.1
+EPSILON_DURATION = 5000
 RANDOM_SEED = 0xC0FFEE
 
 random.seed(RANDOM_SEED)
@@ -74,11 +77,35 @@ class QNetwork(nn.Module):
         return self.layers(x)
 
 
-def select_action(q_net: nn.Module, epsilon: float = 0) -> int:
+def get_linear_anneal_func(start_value, end_value, end_steps) -> Callable:
+    """Create a linear annealing function.
+
+    Parameters
+    ----------
+    start_value : float
+        Initial value for linear annealing.
+    end_value : float
+        Terminal value for linear annealing.
+    end_steps : int
+        Number of steps to anneal value.
+
+    Returns
+    -------
+    linear_anneal_func : Callable
+        A function that returns annealed value given a step index.
+    """
+    return lambda x: (end_value - start_value) * x / end_steps + start_value
+
+
+def select_action(env: gym.Env, obs: torch.Tensor, q_net: nn.Module, epsilon: float = 0) -> int:
     """Select action based on epsilon-greedy policy.
 
     Parameters
     ----------
+    env : gym.Env
+        Environment to train the agent in.
+    obs : torch.Tensor
+        Observation from the current timestep.
     q_net : nn.Module
         An action-value network to find the greedy action.
     epsilon : float
@@ -108,13 +135,14 @@ def main():
     q_net = QNetwork(env.observation_space.shape[0], env.action_space.n)
     replay_buffer = deque(maxlen=REPLAY_BUFFER_SIZE)
     optimizer = optim.SGD(q_net.parameters(), lr=0.1)
+    get_epsilon = get_linear_anneal_func(EPSILON_START, EPSILON_END, EPSILON_DURATION)
 
     episode_return = 0
-    episode_count = 0
-    for i in range(ENV_STEPS):
+    episode_i = 0
+    for step_i in range(ENV_STEPS):
         # Select and make action
-        # TODO(seungjaeryanlee): Anneal epsilon
-        action = select_action(q_net, EPSILON)
+        epsilon = get_epsilon(step_i)
+        action = select_action(env, obs, q_net, epsilon)
         next_obs, rew, done, info = env.step(action)
 
         # Update replay buffer and train QNetwork
@@ -150,10 +178,10 @@ def main():
         episode_return += rew
         if done:
             # TODO(seungjaeryanlee): Use logging and wandb
-            print("Episode {} Return: {}".format(episode_count, episode_return))
+            print("Episode {} Return: {}".format(episode_i, episode_return))
             env.reset()
             episode_return = 0
-            episode_count += 1
+            episode_i += 1
 
         obs = next_obs
 
