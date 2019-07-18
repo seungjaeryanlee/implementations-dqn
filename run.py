@@ -12,6 +12,7 @@ from collections import deque
 from collections import namedtuple
 import random
 from typing import Callable
+from typing import Tuple
 
 import gym
 import torch
@@ -77,18 +78,53 @@ class QNetwork(nn.Module):
         return self.layers(x)
 
 
-class ReplayBuffer():
-    def __init__(self, maxlen):
+class ReplayBuffer:
+    def __init__(self, maxlen: int):
+        """Initialize simple replay buffer.
+
+        Parameters
+        ----------
+        maxlen : int
+            The capacity of the replay buffer.
+
+        """
         self.buffer = deque(maxlen=maxlen)
 
     def __len__(self):
         return len(self.buffer)
 
-    def append(self, transition):
+    def append(self, transition: Transition):
+        """Add new transition to the buffer.
+
+        Parameters
+        ----------
+        transition: Transition
+            The transition to add to the buffer.
+        """
         assert type(transition) == Transition
         self.buffer.append(transition)
 
-    def get_torch_batch(self, batch_size):
+    def get_torch_batch(self, batch_size: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Return a randomly selected batch in torch.Tensor format.
+
+        Parameters
+        ----------
+        batch_size : int
+            The size of the output batches.
+
+        Returns
+        -------
+        obs_b : torch.FloatTensor
+            Batched observations.
+        action_b : torch.LongTensor
+            Batched actions.
+        rew_b : torch.FloatTensor
+            Batched rewards.
+        next_obs_b : torch.FloatTensor
+            Batched observations of the next step.
+        done_b : torch.FloatTensor
+            Batched terminal booleans.
+        """
         transition_b = random.sample(self.buffer, batch_size)
         obs_b, action_b, rew_b, next_obs_b, done_b = zip(*transition_b)
         obs_b = torch.FloatTensor(obs_b)
@@ -99,7 +135,9 @@ class ReplayBuffer():
         return obs_b, action_b, rew_b, next_obs_b, done_b
 
 
-def get_linear_anneal_func(start_value, end_value, end_steps) -> Callable:
+def get_linear_anneal_func(
+    start_value: float, end_value: float, end_steps: int
+) -> Callable:
     """Create a linear annealing function.
 
     Parameters
@@ -119,7 +157,9 @@ def get_linear_anneal_func(start_value, end_value, end_steps) -> Callable:
     return lambda x: (end_value - start_value) * x / end_steps + start_value
 
 
-def select_action(env: gym.Env, obs: torch.Tensor, q_net: nn.Module, epsilon: float = 0) -> int:
+def select_action(
+    env: gym.Env, obs: torch.Tensor, q_net: nn.Module, epsilon: float = 0
+) -> int:
     """Select action based on epsilon-greedy policy.
 
     Parameters
@@ -172,7 +212,9 @@ def main():
             Transition(obs=obs, action=action, rew=rew, next_obs=next_obs, done=done)
         )
         if len(replay_buffer) >= MIN_REPLAY_BUFFER_SIZE:
-            obs_b, action_b, rew_b, next_obs_b, done_b = replay_buffer.get_torch_batch(BATCH_SIZE)
+            obs_b, action_b, rew_b, next_obs_b, done_b = replay_buffer.get_torch_batch(
+                BATCH_SIZE
+            )
             assert obs_b.shape == (BATCH_SIZE, env.observation_space.shape[0])
             assert action_b.shape == (BATCH_SIZE,)
             assert rew_b.shape == (BATCH_SIZE,)
