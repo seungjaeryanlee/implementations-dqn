@@ -215,10 +215,10 @@ def main():
     parser.add("--RANDOM_SEED", dest="RANDOM_SEED", type=int)
     parser.add("--TARGET_NET_UPDATE_RATE", dest="TARGET_NET_UPDATE_RATE", type=int)
     parser.add("--USE_TENSORBOARD", dest="USE_TENSORBOARD", action="store_true")
-    parser.add("--NO_TENSORBOARD", dest="USE_TENSORBOARD", action="store_false")
     parser.add("--USE_WANDB", dest="USE_WANDB", action="store_true")
-    parser.add("--NO_WANDB", dest="USE_WANDB", action="store_false")
     ARGS = parser.parse_args()
+    if not hasattr(ARGS, 'USE_TENSORBOARD'): ARGS.USE_TENSORBOARD = False
+    if not hasattr(ARGS, 'USE_WANDB'): ARGS.USE_WANDB = False
 
     # Log to File, Console, TensorBoard, W&B
     logger = get_logger()
