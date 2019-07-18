@@ -24,13 +24,15 @@ import torch.optim as optim
 
 
 # Setup logger
-logger = logging.getLogger('main_logger')
+logger = logging.getLogger("main_logger")
 logger.setLevel(logging.DEBUG)
-fh = logging.FileHandler('run.log')
+fh = logging.FileHandler("run.log")
 fh.setLevel(logging.DEBUG)
 ch = logging.StreamHandler()
 ch.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s | %(filename)12s | %(levelname)8s | %(message)s')
+formatter = logging.Formatter(
+    "%(asctime)s | %(filename)12s | %(levelname)8s | %(message)s"
+)
 fh.setFormatter(formatter)
 ch.setFormatter(formatter)
 logger.addHandler(fh)
@@ -120,7 +122,9 @@ class ReplayBuffer:
         assert type(transition) == Transition
         self.buffer.append(transition)
 
-    def get_torch_batch(self, batch_size: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    def get_torch_batch(
+        self, batch_size: int
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """Return a randomly selected batch in torch.Tensor format.
 
         Parameters
@@ -170,7 +174,12 @@ def get_linear_anneal_func(
     linear_anneal_func : Callable
         A function that returns annealed value given a step index.
     """
-    return lambda x: (end_value - start_value) * x / end_steps + start_value
+
+    def linear_anneal_func(x):
+        assert x >= 0
+        return (end_value - start_value) * min(x, end_steps) / end_steps + start_value
+
+    return linear_anneal_func
 
 
 def select_action(
@@ -256,7 +265,11 @@ def main():
         episode_return += rew
         if done:
             # TODO(seungjaeryanlee): Use logging and wandb
-            logger.info("Episode {:4d} Return: {}".format(episode_i, episode_return))
+            logger.info(
+                "Episode {:4d}  Steps {:5d}  Return: {}".format(
+                    episode_i, step_i, episode_return
+                )
+            )
             env.reset()
             episode_return = 0
             episode_i += 1
