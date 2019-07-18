@@ -116,6 +116,7 @@ class QNetwork(nn.Module):
         -------
         q_values : torch.Tensor
             Output tensor of the network. Q-values of all actions.
+
         """
         return self.layers(x)
 
@@ -142,6 +143,7 @@ class ReplayBuffer:
         ----------
         transition: Transition
             The transition to add to the buffer.
+
         """
         assert type(transition) == Transition
         self.buffer.append(transition)
@@ -168,6 +170,7 @@ class ReplayBuffer:
             Batched observations of the next step.
         done_b : torch.FloatTensor
             Batched terminal booleans.
+
         """
         transition_b = random.sample(self.buffer, batch_size)
         obs_b, action_b, rew_b, next_obs_b, done_b = zip(*transition_b)
@@ -198,6 +201,7 @@ def get_linear_anneal_func(
     -------
     linear_anneal_func : Callable
         A function that returns annealed value given a step index.
+
     """
 
     def linear_anneal_func(x):
@@ -227,6 +231,7 @@ def select_action(
     -------
     action : int
         The chosen action.
+
     """
     assert 0 <= epsilon <= 1
 
@@ -240,6 +245,7 @@ def select_action(
 
 
 def main():
+    """Run only when this file is called directly."""
     env = gym.make("CartPole-v0")
     env.seed(ARGS.RANDOM_SEED)
     obs = env.reset()

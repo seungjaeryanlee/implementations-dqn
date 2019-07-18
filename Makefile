@@ -15,8 +15,7 @@ format:
 
 # Test code with black, flake8, isort, mypy, and pytest.
 test:
-	black --check .
-	flake8
-	isort **/*.py -c
-	mypy .
 	pytest
+	black --check .
+	isort **/*.py -c
+	flake8
