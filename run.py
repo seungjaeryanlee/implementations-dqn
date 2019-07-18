@@ -77,6 +77,28 @@ class QNetwork(nn.Module):
         return self.layers(x)
 
 
+class ReplayBuffer():
+    def __init__(self, maxlen):
+        self.buffer = deque(maxlen=maxlen)
+
+    def __len__(self):
+        return len(self.buffer)
+
+    def append(self, transition):
+        assert type(transition) == Transition
+        self.buffer.append(transition)
+
+    def get_torch_batch(self, batch_size):
+        transition_b = random.sample(self.buffer, batch_size)
+        obs_b, action_b, rew_b, next_obs_b, done_b = zip(*transition_b)
+        obs_b = torch.FloatTensor(obs_b)
+        action_b = torch.LongTensor(action_b)
+        rew_b = torch.FloatTensor(rew_b)
+        next_obs_b = torch.FloatTensor(next_obs_b)
+
+        return obs_b, action_b, rew_b, next_obs_b, done_b
+
+
 def get_linear_anneal_func(start_value, end_value, end_steps) -> Callable:
     """Create a linear annealing function.
 
@@ -133,7 +155,7 @@ def main():
     obs = env.reset()
 
     q_net = QNetwork(env.observation_space.shape[0], env.action_space.n)
-    replay_buffer = deque(maxlen=REPLAY_BUFFER_SIZE)
+    replay_buffer = ReplayBuffer(maxlen=REPLAY_BUFFER_SIZE)
     optimizer = optim.SGD(q_net.parameters(), lr=0.1)
     get_epsilon = get_linear_anneal_func(EPSILON_START, EPSILON_END, EPSILON_DURATION)
 
@@ -150,12 +172,7 @@ def main():
             Transition(obs=obs, action=action, rew=rew, next_obs=next_obs, done=done)
         )
         if len(replay_buffer) >= MIN_REPLAY_BUFFER_SIZE:
-            transition_b = random.sample(replay_buffer, BATCH_SIZE)
-            obs_b, action_b, rew_b, next_obs_b, done_b = zip(*transition_b)
-            obs_b = torch.FloatTensor(obs_b)
-            action_b = torch.LongTensor(action_b)
-            rew_b = torch.FloatTensor(rew_b)
-            next_obs_b = torch.FloatTensor(next_obs_b)
+            obs_b, action_b, rew_b, next_obs_b, done_b = replay_buffer.get_torch_batch(BATCH_SIZE)
             assert obs_b.shape == (BATCH_SIZE, env.observation_space.shape[0])
             assert action_b.shape == (BATCH_SIZE,)
             assert rew_b.shape == (BATCH_SIZE,)
