@@ -73,7 +73,7 @@ def main():
 
     q_net = QNetwork(env.observation_space.shape[0], env.action_space.n)
     replay_buffer = deque(maxlen=REPLAY_BUFFER_SIZE)
-    optimizer = optim.SGD(q_net.parameters(), lr=0.001)
+    optimizer = optim.SGD(q_net.parameters(), lr=0.1)
 
     episode_return = 0
     episode_count = 0
@@ -104,7 +104,7 @@ def main():
             assert target.shape == (BATCH_SIZE, )
             assert prediction.shape == (BATCH_SIZE, )
 
-            td_loss = F.mse_loss(prediction, target)
+            td_loss = F.smooth_l1_loss(prediction, target)
             assert td_loss.shape == ()
 
             optimizer.zero_grad()
@@ -114,11 +114,11 @@ def main():
         # Logging
         episode_return += rew
         if done:
+            # TODO(seungjaeryanlee): Use logging and wandb
+            print('Episode {} Return: {}'.format(episode_count, episode_return))
             env.reset()
             episode_return = 0
             episode_count += 1
-            # TODO(seungjaeryanlee): Use logging and wandb
-            print('Episode {} Return: {}'.format(episode_count, episode_return))
 
         obs = next_obs
 
