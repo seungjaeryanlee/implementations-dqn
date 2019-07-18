@@ -21,6 +21,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import wandb
 
 
 # Setup logger
@@ -37,6 +38,9 @@ fh.setFormatter(formatter)
 ch.setFormatter(formatter)
 logger.addHandler(fh)
 logger.addHandler(ch)
+
+# Setup wandb
+wandb.init(project="implementations-dqn")
 
 # Hyperparameters
 ENV_STEPS = 10000
@@ -220,6 +224,7 @@ def main():
     obs = env.reset()
 
     q_net = QNetwork(env.observation_space.shape[0], env.action_space.n)
+    wandb.watch(q_net)
     target_q_net = copy.deepcopy(q_net)
     replay_buffer = ReplayBuffer(maxlen=REPLAY_BUFFER_SIZE)
     optimizer = optim.SGD(q_net.parameters(), lr=0.1)
@@ -270,6 +275,10 @@ def main():
                     episode_i, step_i, episode_return
                 )
             )
+            wandb.log({
+                'Episode Return': episode_return,
+                'Episode Count': episode_i,
+            }, step=step_i)
             env.reset()
             episode_return = 0
             episode_i += 1
