@@ -31,8 +31,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-import wandb
-from torch.utils.tensorboard import SummaryWriter
 
 from common import get_logger, make_reproducible
 
@@ -215,15 +213,22 @@ def main():
     parser.add("--EPSILON_END", dest="EPSILON_END", type=float)
     parser.add("--EPSILON_DURATION", dest="EPSILON_DURATION", type=int)
     parser.add("--RANDOM_SEED", dest="RANDOM_SEED", type=int)
-    parser.add(
-        "--TARGET_NETWORK_UPDATE_RATE", dest="TARGET_NETWORK_UPDATE_RATE", type=int
-    )
+    parser.add("--TARGET_NET_UPDATE_RATE", dest="TARGET_NET_UPDATE_RATE", type=int)
+    parser.add("--USE_TENSORBOARD", dest="USE_TENSORBOARD", action="store_true")
+    parser.add("--NO_TENSORBOARD", dest="USE_TENSORBOARD", action="store_false")
+    parser.add("--USE_WANDB", dest="USE_WANDB", action="store_true")
+    parser.add("--NO_WANDB", dest="USE_WANDB", action="store_false")
     ARGS = parser.parse_args()
 
     # Log to File, Console, TensorBoard, W&B
     logger = get_logger()
-    writer = SummaryWriter(log_dir="tensorboard_logs")
-    wandb.init(project="implementations-dqn")
+
+    if ARGS.USE_TENSORBOARD:
+        from torch.utils.tensorboard import SummaryWriter
+        writer = SummaryWriter(log_dir="tensorboard_logs")
+    if ARGS.USE_WANDB:
+        import wandb
+        wandb.init(project="implementations-dqn", config=ARGS)
 
     # Fix random seeds
     make_reproducible(seed=ARGS.RANDOM_SEED, use_random=True, use_torch=True)
@@ -235,13 +240,15 @@ def main():
 
     # Setup agent
     q_net = QNetwork(env.observation_space.shape[0], env.action_space.n)
-    wandb.watch(q_net)
     target_q_net = copy.deepcopy(q_net)
     replay_buffer = ReplayBuffer(maxlen=ARGS.REPLAY_BUFFER_SIZE)
     optimizer = optim.Adam(q_net.parameters())
     get_epsilon = get_linear_anneal_func(
         ARGS.EPSILON_START, ARGS.EPSILON_END, ARGS.EPSILON_DURATION
     )
+
+    if ARGS.USE_WANDB:
+        wandb.watch(q_net)
 
     episode_return = 0
     episode_i = 0
@@ -280,10 +287,10 @@ def main():
             td_loss.backward()
             optimizer.step()
 
-        if step_i % ARGS.TARGET_NETWORK_UPDATE_RATE == 0:
+        if step_i % ARGS.TARGET_NET_UPDATE_RATE == 0:
             target_q_net = copy.deepcopy(q_net)
 
-        # Logging
+        # If episode is finished
         episode_return += rew
         if done:
             logger.info(
@@ -291,11 +298,13 @@ def main():
                     episode_i, step_i, episode_return
                 )
             )
-            writer.add_scalar("Episode Return", episode_return, episode_i)
-            wandb.log(
-                {"Episode Return": episode_return, "Episode Count": episode_i},
-                step=step_i,
-            )
+            if ARGS.USE_TENSORBOARD:
+                writer.add_scalar("Episode Return", episode_return, episode_i)
+            if ARGS.USE_WANDB:
+                wandb.log(
+                    {"Episode Return": episode_return, "Episode Count": episode_i},
+                    step=step_i,
+                )
             env.reset()
             episode_return = 0
             episode_i += 1
