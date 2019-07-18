@@ -220,6 +220,15 @@ def main():
     if not hasattr(ARGS, 'USE_TENSORBOARD'): ARGS.USE_TENSORBOARD = False
     if not hasattr(ARGS, 'USE_WANDB'): ARGS.USE_WANDB = False
 
+    print()
+    print("+--------------------------------+--------------------------------+")
+    print("| Hyperparameters                | Value                          |")
+    print("+--------------------------------+--------------------------------+")
+    for arg in vars(ARGS):
+        print("| {:30} | {:<30} |".format(arg, getattr(ARGS, arg)))
+    print("+--------------------------------+--------------------------------+")
+    print()
+
     # Log to File, Console, TensorBoard, W&B
     logger = get_logger()
 
