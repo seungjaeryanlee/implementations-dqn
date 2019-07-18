@@ -26,7 +26,12 @@ MIN_REPLAY_BUFFER_SIZE = 100
 BATCH_SIZE = 32
 DISCOUNT = 1
 EPSILON = 0.1
+RANDOM_SEED = 0xc0ffee
 
+random.seed(RANDOM_SEED)
+torch.manual_seed(RANDOM_SEED)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 
 Transition = namedtuple('Transition', ['obs', 'action', 'rew', 'next_obs', 'done'])
 
@@ -70,6 +75,7 @@ class QNetwork(nn.Module):
 
 def main():
     env = gym.make('CartPole-v0')
+    env.seed(RANDOM_SEED)
     obs = env.reset()
 
     q_net = QNetwork(env.observation_space.shape[0], env.action_space.n)
