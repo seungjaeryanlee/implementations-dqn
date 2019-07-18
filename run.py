@@ -253,6 +253,7 @@ def main():
     obs = env.reset()
 
     # Setup agent
+    # TODO(seungjaeryanlee): Implement Save & Load
     q_net = QNetwork(env.observation_space.shape[0], env.action_space.n)
     target_q_net = copy.deepcopy(q_net)
     replay_buffer = ReplayBuffer(maxlen=ARGS.REPLAY_BUFFER_SIZE)
@@ -299,11 +300,26 @@ def main():
             td_loss.backward()
             optimizer.step()
 
+            # Log td_loss
+            logger.debug(
+                "Episode {:4d}  Steps {:5d}  Loss {:6.6f}".format(
+                    episode_i, step_i, td_loss.item()
+                )
+            )
+            if ARGS.USE_TENSORBOARD:
+                writer.add_scalar("td_loss", td_loss.item(), step_i)
+            if ARGS.USE_WANDB:
+                wandb.log(
+                    {"TD Loss": td_loss.item()},
+                    step=step_i,
+                )
+
         if step_i % ARGS.TARGET_NET_UPDATE_RATE == 0:
             target_q_net = copy.deepcopy(q_net)
 
-        # If episode is finished
         episode_return += rew
+
+        # If episode is finished
         if done:
             logger.info(
                 "Episode {:4d}  Steps {:5d}  Return {:4d}".format(
