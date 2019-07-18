@@ -36,34 +36,6 @@ from torch.utils.tensorboard import SummaryWriter
 
 from common import get_logger, make_reproducible
 
-# Setup hyperparameters
-parser = configargparse.ArgParser()
-parser.add(
-    "-c", "--config", required=True, is_config_file=True, help="config file path"
-)
-parser.add("--ENV_STEPS", dest="ENV_STEPS", type=int)
-parser.add("--REPLAY_BUFFER_SIZE", dest="REPLAY_BUFFER_SIZE", type=int)
-parser.add("--MIN_REPLAY_BUFFER_SIZE", dest="MIN_REPLAY_BUFFER_SIZE", type=int)
-parser.add("--BATCH_SIZE", dest="BATCH_SIZE", type=int)
-parser.add("--DISCOUNT", dest="DISCOUNT", type=float)
-parser.add("--EPSILON_START", dest="EPSILON_START", type=float)
-parser.add("--EPSILON_END", dest="EPSILON_END", type=float)
-parser.add("--EPSILON_DURATION", dest="EPSILON_DURATION", type=int)
-parser.add("--RANDOM_SEED", dest="RANDOM_SEED", type=int)
-parser.add("--TARGET_NETWORK_UPDATE_RATE", dest="TARGET_NETWORK_UPDATE_RATE", type=int)
-ARGS = parser.parse_args()
-
-logger = get_logger()
-
-# Setup TensorBoard
-writer = SummaryWriter(log_dir="tensorboard_logs")
-
-# Setup wandb
-wandb.init(project="implementations-dqn")
-
-
-make_reproducible(seed=ARGS.RANDOM_SEED)
-
 Transition = namedtuple("Transition", ["obs", "action", "rew", "next_obs", "done"])
 
 
@@ -231,10 +203,37 @@ def select_action(
 
 def main():
     """Run only when this file is called directly."""
+    # Setup hyperparameters
+    parser = configargparse.ArgParser()
+    parser.add("-c", "--config", required=True, is_config_file=True)
+    parser.add("--ENV_STEPS", dest="ENV_STEPS", type=int)
+    parser.add("--REPLAY_BUFFER_SIZE", dest="REPLAY_BUFFER_SIZE", type=int)
+    parser.add("--MIN_REPLAY_BUFFER_SIZE", dest="MIN_REPLAY_BUFFER_SIZE", type=int)
+    parser.add("--BATCH_SIZE", dest="BATCH_SIZE", type=int)
+    parser.add("--DISCOUNT", dest="DISCOUNT", type=float)
+    parser.add("--EPSILON_START", dest="EPSILON_START", type=float)
+    parser.add("--EPSILON_END", dest="EPSILON_END", type=float)
+    parser.add("--EPSILON_DURATION", dest="EPSILON_DURATION", type=int)
+    parser.add("--RANDOM_SEED", dest="RANDOM_SEED", type=int)
+    parser.add(
+        "--TARGET_NETWORK_UPDATE_RATE", dest="TARGET_NETWORK_UPDATE_RATE", type=int
+    )
+    ARGS = parser.parse_args()
+
+    # Log to File, Console, TensorBoard, W&B
+    logger = get_logger()
+    writer = SummaryWriter(log_dir="tensorboard_logs")
+    wandb.init(project="implementations-dqn")
+
+    # Fix random seeds
+    make_reproducible(seed=ARGS.RANDOM_SEED, use_random=True, use_torch=True)
+
+    # Setup environment
     env = gym.make("CartPole-v0")
     env.seed(ARGS.RANDOM_SEED)
     obs = env.reset()
 
+    # Setup agent
     q_net = QNetwork(env.observation_space.shape[0], env.action_space.n)
     wandb.watch(q_net)
     target_q_net = copy.deepcopy(q_net)
@@ -301,6 +300,7 @@ def main():
             episode_return = 0
             episode_i += 1
 
+        # Prepare for next step
         obs = next_obs
 
 

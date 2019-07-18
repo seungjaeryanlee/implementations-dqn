@@ -1,7 +1,7 @@
 """Ensure reproducibility."""
 
 
-def make_reproducible(seed, use_random, use_numpy, use_torch):
+def make_reproducible(seed, use_random=False, use_numpy=False, use_torch=False):
     """Set random seeds to ensure reproducibility."""
     if use_random:
         import random
