@@ -294,12 +294,12 @@ def main():
         episode_return += rew
         if done:
             logger.info(
-                "Episode {:4d}  Steps {:5d}  Return: {}".format(
-                    episode_i, step_i, episode_return
+                "Episode {:4d}  Steps {:5d}  Return {:4d}".format(
+                    episode_i, step_i, int(episode_return)
                 )
             )
             if ARGS.USE_TENSORBOARD:
-                writer.add_scalar("Episode Return", episode_return, episode_i)
+                writer.add_scalar("episode_return", episode_return, episode_i)
             if ARGS.USE_WANDB:
                 wandb.log(
                     {"Episode Return": episode_return, "Episode Count": episode_i},
