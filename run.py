@@ -170,6 +170,7 @@ class ReplayBuffer:
         action_b = torch.LongTensor(action_b)
         rew_b = torch.FloatTensor(rew_b)
         next_obs_b = torch.FloatTensor(next_obs_b)
+        done_b = torch.FloatTensor(done_b)
 
         return obs_b, action_b, rew_b, next_obs_b, done_b
 
@@ -242,7 +243,7 @@ def main():
     wandb.watch(q_net)
     target_q_net = copy.deepcopy(q_net)
     replay_buffer = ReplayBuffer(maxlen=REPLAY_BUFFER_SIZE)
-    optimizer = optim.SGD(q_net.parameters(), lr=0.1)
+    optimizer = optim.Adam(q_net.parameters())
     get_epsilon = get_linear_anneal_func(EPSILON_START, EPSILON_END, EPSILON_DURATION)
 
     episode_return = 0
@@ -265,8 +266,9 @@ def main():
             assert action_b.shape == (BATCH_SIZE,)
             assert rew_b.shape == (BATCH_SIZE,)
             assert next_obs_b.shape == (BATCH_SIZE, env.observation_space.shape[0])
+            assert done_b.shape == (BATCH_SIZE,)
 
-            target = rew_b + DISCOUNT * target_q_net(next_obs_b).max(dim=-1)[0]
+            target = rew_b + (1 - done_b) * DISCOUNT * target_q_net(next_obs_b).max(dim=-1)[0]
             prediction = q_net(obs_b).gather(1, action_b.unsqueeze(1)).squeeze(1)
             assert target.shape == (BATCH_SIZE,)
             assert prediction.shape == (BATCH_SIZE,)
