@@ -26,14 +26,15 @@ MIN_REPLAY_BUFFER_SIZE = 100
 BATCH_SIZE = 32
 DISCOUNT = 1
 EPSILON = 0.1
-RANDOM_SEED = 0xc0ffee
+RANDOM_SEED = 0xC0FFEE
 
 random.seed(RANDOM_SEED)
 torch.manual_seed(RANDOM_SEED)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
-Transition = namedtuple('Transition', ['obs', 'action', 'rew', 'next_obs', 'done'])
+Transition = namedtuple("Transition", ["obs", "action", "rew", "next_obs", "done"])
+
 
 class QNetwork(nn.Module):
     def __init__(self, in_dim: int, out_dim: int):
@@ -54,7 +55,7 @@ class QNetwork(nn.Module):
             nn.ReLU(),
             nn.Linear(128, 128),
             nn.ReLU(),
-            nn.Linear(128, out_dim)
+            nn.Linear(128, out_dim),
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -74,7 +75,7 @@ class QNetwork(nn.Module):
 
 
 def main():
-    env = gym.make('CartPole-v0')
+    env = gym.make("CartPole-v0")
     env.seed(RANDOM_SEED)
     obs = env.reset()
 
@@ -95,7 +96,9 @@ def main():
         next_obs, rew, done, info = env.step(action)
 
         # Update replay buffer and train QNetwork
-        replay_buffer.append(Transition(obs=obs, action=action, rew=rew, next_obs=next_obs, done=done))
+        replay_buffer.append(
+            Transition(obs=obs, action=action, rew=rew, next_obs=next_obs, done=done)
+        )
         if len(replay_buffer) >= MIN_REPLAY_BUFFER_SIZE:
             transition_b = random.sample(replay_buffer, BATCH_SIZE)
             obs_b, action_b, rew_b, next_obs_b, done_b = zip(*transition_b)
@@ -104,15 +107,15 @@ def main():
             rew_b = torch.FloatTensor(rew_b)
             next_obs_b = torch.FloatTensor(next_obs_b)
             assert obs_b.shape == (BATCH_SIZE, env.observation_space.shape[0])
-            assert action_b.shape == (BATCH_SIZE, )
-            assert rew_b.shape == (BATCH_SIZE, )
+            assert action_b.shape == (BATCH_SIZE,)
+            assert rew_b.shape == (BATCH_SIZE,)
             assert next_obs_b.shape == (BATCH_SIZE, env.observation_space.shape[0])
 
             # TODO(seungjaeryanlee): Use Target QNetwork
             target = rew_b + DISCOUNT * q_net(next_obs_b).max(dim=-1)[0]
             prediction = q_net(obs_b).gather(1, action_b.unsqueeze(1)).squeeze(1)
-            assert target.shape == (BATCH_SIZE, )
-            assert prediction.shape == (BATCH_SIZE, )
+            assert target.shape == (BATCH_SIZE,)
+            assert prediction.shape == (BATCH_SIZE,)
 
             td_loss = F.smooth_l1_loss(prediction, target)
             assert td_loss.shape == ()
@@ -125,12 +128,13 @@ def main():
         episode_return += rew
         if done:
             # TODO(seungjaeryanlee): Use logging and wandb
-            print('Episode {} Return: {}'.format(episode_count, episode_return))
+            print("Episode {} Return: {}".format(episode_count, episode_return))
             env.reset()
             episode_return = 0
             episode_count += 1
 
         obs = next_obs
+
 
 if __name__ == "__main__":
     main()
