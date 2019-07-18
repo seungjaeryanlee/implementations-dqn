@@ -1,3 +1,11 @@
+"""Implement Deep Q-Network.
+
+Glossary
+--------
+obs : Observation
+rew : Reward
+"""
+
 #!/usr/bin/env python
 import gym
 import torch
@@ -48,17 +56,18 @@ class QNetwork(nn.Module):
 
 def main():
     env = gym.make('CartPole-v0')
-    env.reset()
+    obs = env.reset()
 
     q_net = QNetwork(env.observation_space.shape[0], env.action_space.n)
 
     episode_return = 0
     episode_count = 0
     for i in range(ENV_STEPS):
-        # TODO(seungjaeryanlee): Use Q-network to choose action
-        action = env.action_space.sample()
-        state, reward, done, info = env.step(action)
-        episode_return += reward
+        # TODO(seungjaeryanlee): Use epsilon-greedy policy
+        q_values = q_net(torch.FloatTensor(obs))
+        action = q_values.argmax().item()
+        obs, rew, done, info = env.step(action)
+        episode_return += rew
         if done:
             env.reset()
             episode_return = 0
