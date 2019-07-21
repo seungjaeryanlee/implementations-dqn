@@ -305,6 +305,7 @@ def main():
 
     episode_return = 0
     episode_i = 0
+    eval_episode_i = 0
     for step_i in range(ARGS.ENV_STEPS + 1):
         # Select and make action
         epsilon = get_epsilon(step_i)
@@ -364,7 +365,15 @@ def main():
                     step_i, int(eval_episode_return)
                 )
             )
-            # TODO(seungjaeryanlee): Log to TensorBoard and W&B
+            if ARGS.USE_TENSORBOARD:
+                writer.add_scalar("eval/episode_return", eval_episode_return, eval_episode_i)
+            if ARGS.USE_WANDB:
+                wandb.log(
+                    {"Evaluation Episode Return": eval_episode_return, "Evaluation Episode Count": eval_episode_i},
+                    step=step_i,
+                )
+
+            eval_episode_i += 1
 
         if step_i % ARGS.TARGET_NET_UPDATE_RATE == 0:
             target_q_net = copy.deepcopy(q_net)
