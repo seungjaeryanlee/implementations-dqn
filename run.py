@@ -3,17 +3,30 @@
 
 https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf
 
+
 Running
 -------
-You can train the DQN agent on CartPole with the below command:
+You can train the DQN agent on CartPole with the inluded
+configuration file with the below command:
 ```
 python run.py -c cartpole.conf
+```
+
+To save a trained agent, use the SAVE_PATH flag.
+```
+python run.py -c cartpole.conf --SAVE_PATH=saves/cartpole.pth
+```
+
+To load a trained agent, use the LOAD_PATH flag.
+```
+python run.py -c cartpole.conf --LOAD_PATH=saves/cartpole.pth
 ```
 
 To enable logging to TensorBoard or W&B, use appropriate flags.
 ```
 python run.py -c cartpole.conf --USE_TENSORBOARD --USE_WANDB
 ```
+
 
 Logging
 -------
@@ -24,6 +37,7 @@ https://app.wandb.ai/seungjaeryanlee/implementations-dqn/runs
 ```
 tensorboard --logdir=tensorboard_logs --port=2223
 ```
+
 
 Glossary
 --------
@@ -227,6 +241,8 @@ def main():
     parser.add("--EPSILON_DURATION", dest="EPSILON_DURATION", type=int)
     parser.add("--RANDOM_SEED", dest="RANDOM_SEED", type=int)
     parser.add("--TARGET_NET_UPDATE_RATE", dest="TARGET_NET_UPDATE_RATE", type=int)
+    parser.add("--SAVE_PATH", dest="SAVE_PATH", type=str, default="")
+    parser.add("--LOAD_PATH", dest="LOAD_PATH", type=str, default="")
     parser.add("--USE_TENSORBOARD", dest="USE_TENSORBOARD", action="store_true")
     parser.add("--USE_WANDB", dest="USE_WANDB", action="store_true")
     ARGS = parser.parse_args()
@@ -274,11 +290,11 @@ def main():
         ARGS.EPSILON_START, ARGS.EPSILON_END, ARGS.EPSILON_DURATION
     )
 
-    # Save trained agent
-    # TODO(seungjaeryanlee): Add flags to save/load optionally
-    state_dict = torch.load("saves/cartpole.pth")
-    q_net.load_state_dict(state_dict["q_net"])
-    optimizer.load_state_dict(state_dict["optimizer"])
+    # Load trained agent
+    if ARGS.LOAD_PATH:
+        state_dict = torch.load(ARGS.LOAD_PATH)
+        q_net.load_state_dict(state_dict["q_net"])
+        optimizer.load_state_dict(state_dict["optimizer"])
 
     if ARGS.USE_WANDB:
         wandb.watch(q_net)
@@ -359,12 +375,16 @@ def main():
         obs = next_obs
 
     # Save trained agent
-    if not os.path.exists("saves/"):
-        os.makedirs("saves/")
-    torch.save({
-        "q_net": q_net.state_dict(),
-        "optimizer": optimizer.state_dict(),
-    }, "saves/cartpole.pth")
+    if ARGS.SAVE_PATH:
+        # Create specified directory if it does not exist yet
+        SAVE_DIRECTORY = "/".join(ARGS.SAVE_PATH.split("/")[:-1])
+        if not os.path.exists(SAVE_DIRECTORY):
+            os.makedirs(SAVE_DIRECTORY)
+
+        torch.save({
+            "q_net": q_net.state_dict(),
+            "optimizer": optimizer.state_dict(),
+        }, ARGS.SAVE_PATH)
 
 if __name__ == "__main__":
     main()
