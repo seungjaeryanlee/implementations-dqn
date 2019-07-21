@@ -241,6 +241,7 @@ def main():
     parser.add("--EPSILON_DURATION", dest="EPSILON_DURATION", type=int)
     parser.add("--RANDOM_SEED", dest="RANDOM_SEED", type=int)
     parser.add("--TARGET_NET_UPDATE_RATE", dest="TARGET_NET_UPDATE_RATE", type=int)
+    parser.add("--EVAL_FREQUENCY", dest="EVAL_FREQUENCY", type=int)
     parser.add("--SAVE_PATH", dest="SAVE_PATH", type=str, default="")
     parser.add("--LOAD_PATH", dest="LOAD_PATH", type=str, default="")
     parser.add("--USE_TENSORBOARD", dest="USE_TENSORBOARD", action="store_true")
@@ -280,6 +281,9 @@ def main():
     env = gym.make("CartPole-v0")
     env.seed(ARGS.RANDOM_SEED)
     obs = env.reset()
+
+    eval_env = gym.make("CartPole-v0")
+    eval_env.seed(ARGS.RANDOM_SEED)
 
     # Setup agent
     q_net = QNetwork(env.observation_space.shape[0], env.action_space.n)
@@ -347,6 +351,24 @@ def main():
                     {"TD Loss": td_loss.item()},
                     step=step_i,
                 )
+
+        # Evaluate agent periodically
+        if step_i % ARGS.EVAL_FREQUENCY == 0:
+            eval_done = False
+            eval_obs = eval_env.reset()
+            eval_episode_return = 0
+            while not eval_done:
+                eval_action = select_action(env, eval_obs, q_net, epsilon=0)
+                eval_obs, eval_rew, eval_done, info = eval_env.step(eval_action)
+                eval_episode_return += eval_rew
+
+            logger.info(
+                "EVALUATION    Steps {:5d}  Return {:4d}".format(
+                    step_i, int(eval_episode_return)
+                )
+            )
+            # TODO(seungjaeryanlee): Log to TensorBoard and W&B
+
 
         if step_i % ARGS.TARGET_NET_UPDATE_RATE == 0:
             target_q_net = copy.deepcopy(q_net)
