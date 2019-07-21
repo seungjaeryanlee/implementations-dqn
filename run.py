@@ -266,7 +266,6 @@ def main():
     obs = env.reset()
 
     # Setup agent
-    # TODO(seungjaeryanlee): Implement Save & Load
     q_net = QNetwork(env.observation_space.shape[0], env.action_space.n)
     target_q_net = copy.deepcopy(q_net)
     replay_buffer = ReplayBuffer(maxlen=ARGS.REPLAY_BUFFER_SIZE)
@@ -274,6 +273,12 @@ def main():
     get_epsilon = get_linear_anneal_func(
         ARGS.EPSILON_START, ARGS.EPSILON_END, ARGS.EPSILON_DURATION
     )
+
+    # Save trained agent
+    # TODO(seungjaeryanlee): Add flags to save/load optionally
+    state_dict = torch.load("saves/cartpole.pth")
+    q_net.load_state_dict(state_dict["q_net"])
+    optimizer.load_state_dict(state_dict["optimizer"])
 
     if ARGS.USE_WANDB:
         wandb.watch(q_net)
