@@ -305,7 +305,7 @@ def main():
 
     episode_return = 0
     episode_i = 0
-    for step_i in range(ARGS.ENV_STEPS):
+    for step_i in range(ARGS.ENV_STEPS+1):
         # Select and make action
         epsilon = get_epsilon(step_i)
         action = select_action(env, obs, q_net, epsilon)
