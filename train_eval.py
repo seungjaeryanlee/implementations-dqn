@@ -371,10 +371,15 @@ def main():
                 )
             )
             if ARGS.USE_TENSORBOARD:
-                writer.add_scalar("eval/episode_return", eval_episode_return, eval_episode_i)
+                writer.add_scalar(
+                    "eval/episode_return", eval_episode_return, eval_episode_i
+                )
             if ARGS.USE_WANDB:
                 wandb.log(
-                    {"Evaluation Episode Return": eval_episode_return, "Evaluation Episode Count": eval_episode_i},
+                    {
+                        "Evaluation Episode Return": eval_episode_return,
+                        "Evaluation Episode Count": eval_episode_i,
+                    },
                     step=step_i,
                 )
 
