@@ -148,7 +148,6 @@ def main():
         wandb.init(project="implementations-dqn", config=CONFIG)
 
     # Fix random seeds
-    # TODO(seungjaeryanlee): This is not working!
     make_reproducible(seed=CONFIG.RANDOM_SEED, use_random=True, use_torch=True)
 
     # Setup environment
