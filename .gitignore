@@ -1,6 +1,7 @@
 ## Custom
 tensorboard_logs/
 wandb/
+saves/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

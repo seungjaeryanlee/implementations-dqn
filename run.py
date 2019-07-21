@@ -3,6 +3,18 @@
 
 https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf
 
+Running
+-------
+You can train the DQN agent on CartPole with the below command:
+```
+python run.py -c cartpole.conf
+```
+
+To enable logging to TensorBoard or W&B, use appropriate flags.
+```
+python run.py -c cartpole.conf --USE_TENSORBOARD --USE_WANDB
+```
+
 Logging
 -------
 1. You can view runs online via Weights & Biases (wandb):
@@ -21,6 +33,7 @@ obs : Observation
 rew : Reward
 """
 import copy
+import os
 import random
 from collections import deque, namedtuple
 from typing import Callable, Tuple
@@ -340,6 +353,13 @@ def main():
         # Prepare for next step
         obs = next_obs
 
+    # Save trained agent
+    if not os.path.exists("saves/"):
+        os.makedirs("saves/")
+    torch.save({
+        "q_net": q_net.state_dict(),
+        "optimizer": optimizer.state_dict(),
+    }, "saves/cartpole.pth")
 
 if __name__ == "__main__":
     main()
