@@ -54,8 +54,7 @@ rew : Reward
 import copy
 import os
 import random
-from collections import deque, namedtuple
-from typing import Callable, Tuple
+from typing import Callable
 
 import configargparse
 import gym
@@ -65,109 +64,8 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 from common import get_logger, make_reproducible
-
-Transition = namedtuple("Transition", ["obs", "action", "rew", "next_obs", "done"])
-
-
-class QNetwork(nn.Module):
-    def __init__(self, in_dim: int, out_dim: int):
-        """Initialize Q-Network.
-
-        Parameters
-        ----------
-        in_dim : int
-            Dimension of the input layer.
-        out_dim : int
-            Dimension of the output layer.
-
-        """
-        super().__init__()
-
-        self.layers = nn.Sequential(
-            nn.Linear(in_dim, 128),
-            nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.ReLU(),
-            nn.Linear(128, out_dim),
-        )
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward propagation.
-
-        Parameters
-        ----------
-        x : torch.Tensor
-            Input tensor for the network. Should be the observation.
-
-        Returns
-        -------
-        q_values : torch.Tensor
-            Output tensor of the network. Q-values of all actions.
-
-        """
-        return self.layers(x)
-
-
-class ReplayBuffer:
-    def __init__(self, maxlen: int):
-        """Initialize simple replay buffer.
-
-        Parameters
-        ----------
-        maxlen : int
-            The capacity of the replay buffer.
-
-        """
-        self.buffer = deque(maxlen=maxlen)
-
-    def __len__(self):
-        return len(self.buffer)
-
-    def append(self, transition: Transition):
-        """Add new transition to the buffer.
-
-        Parameters
-        ----------
-        transition: Transition
-            The transition to add to the buffer.
-
-        """
-        assert type(transition) == Transition
-        self.buffer.append(transition)
-
-    def get_torch_batch(
-        self, batch_size: int
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        """Return a randomly selected batch in torch.Tensor format.
-
-        Parameters
-        ----------
-        batch_size : int
-            The size of the output batches.
-
-        Returns
-        -------
-        obs_b : torch.FloatTensor
-            Batched observations.
-        action_b : torch.LongTensor
-            Batched actions.
-        rew_b : torch.FloatTensor
-            Batched rewards.
-        next_obs_b : torch.FloatTensor
-            Batched observations of the next step.
-        done_b : torch.FloatTensor
-            Batched terminal booleans.
-
-        """
-        transition_b = random.sample(self.buffer, batch_size)
-        obs_b, action_b, rew_b, next_obs_b, done_b = zip(*transition_b)
-        obs_b = torch.FloatTensor(obs_b)
-        action_b = torch.LongTensor(action_b)
-        rew_b = torch.FloatTensor(rew_b)
-        next_obs_b = torch.FloatTensor(next_obs_b)
-        done_b = torch.FloatTensor(done_b)
-
-        return obs_b, action_b, rew_b, next_obs_b, done_b
+from networks import QNetwork
+from replays import ReplayBuffer, Transition
 
 
 def get_linear_anneal_func(
@@ -326,12 +224,17 @@ def main():
             assert obs_b.shape == (CONFIG.BATCH_SIZE, env.observation_space.shape[0])
             assert action_b.shape == (CONFIG.BATCH_SIZE,)
             assert rew_b.shape == (CONFIG.BATCH_SIZE,)
-            assert next_obs_b.shape == (CONFIG.BATCH_SIZE, env.observation_space.shape[0])
+            assert next_obs_b.shape == (
+                CONFIG.BATCH_SIZE,
+                env.observation_space.shape[0],
+            )
             assert done_b.shape == (CONFIG.BATCH_SIZE,)
 
             target = (
                 rew_b
-                + (1 - done_b) * CONFIG.DISCOUNT * target_q_net(next_obs_b).max(dim=-1)[0]
+                + (1 - done_b)
+                * CONFIG.DISCOUNT
+                * target_q_net(next_obs_b).max(dim=-1)[0]
             )
             prediction = q_net(obs_b).gather(1, action_b.unsqueeze(1)).squeeze(1)
             assert target.shape == (CONFIG.BATCH_SIZE,)
