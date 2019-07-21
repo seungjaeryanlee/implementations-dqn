@@ -62,10 +62,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-from common import get_logger, make_reproducible
 from networks import QNetwork
 from replays import ReplayBuffer, Transition
-from utils import get_linear_anneal_func
+from utils import get_linear_anneal_func, get_logger, make_reproducible
 
 
 def select_action(
