@@ -251,67 +251,67 @@ def main():
     parser.add("--LOAD_PATH", dest="LOAD_PATH", type=str, default="")
     parser.add("--USE_TENSORBOARD", dest="USE_TENSORBOARD", action="store_true")
     parser.add("--USE_WANDB", dest="USE_WANDB", action="store_true")
-    ARGS = parser.parse_args()
-    if not hasattr(ARGS, "USE_TENSORBOARD"):
-        ARGS.USE_TENSORBOARD = False
-    if not hasattr(ARGS, "USE_WANDB"):
-        ARGS.USE_WANDB = False
+    CONFIG = parser.parse_args()
+    if not hasattr(CONFIG, "USE_TENSORBOARD"):
+        CONFIG.USE_TENSORBOARD = False
+    if not hasattr(CONFIG, "USE_WANDB"):
+        CONFIG.USE_WANDB = False
 
     print()
     print("+--------------------------------+--------------------------------+")
     print("| Hyperparameters                | Value                          |")
     print("+--------------------------------+--------------------------------+")
-    for arg in vars(ARGS):
-        print("| {:30} | {:<30} |".format(arg, getattr(ARGS, arg)))
+    for arg in vars(CONFIG):
+        print("| {:30} | {:<30} |".format(arg, getattr(CONFIG, arg)))
     print("+--------------------------------+--------------------------------+")
     print()
 
     # Log to File, Console, TensorBoard, W&B
     logger = get_logger()
 
-    if ARGS.USE_TENSORBOARD:
+    if CONFIG.USE_TENSORBOARD:
         from torch.utils.tensorboard import SummaryWriter
 
         writer = SummaryWriter(log_dir="tensorboard_logs")
-    if ARGS.USE_WANDB:
+    if CONFIG.USE_WANDB:
         import wandb
 
-        wandb.init(project="implementations-dqn", config=ARGS)
+        wandb.init(project="implementations-dqn", config=CONFIG)
 
     # Fix random seeds
     # TODO(seungjaeryanlee): This is not working!
-    make_reproducible(seed=ARGS.RANDOM_SEED, use_random=True, use_torch=True)
+    make_reproducible(seed=CONFIG.RANDOM_SEED, use_random=True, use_torch=True)
 
     # Setup environment
     env = gym.make("CartPole-v0")
-    env.seed(ARGS.RANDOM_SEED)
+    env.seed(CONFIG.RANDOM_SEED)
     obs = env.reset()
 
     eval_env = gym.make("CartPole-v0")
-    eval_env.seed(ARGS.RANDOM_SEED)
+    eval_env.seed(CONFIG.RANDOM_SEED)
 
     # Setup agent
     q_net = QNetwork(env.observation_space.shape[0], env.action_space.n)
     target_q_net = copy.deepcopy(q_net)
-    replay_buffer = ReplayBuffer(maxlen=ARGS.REPLAY_BUFFER_SIZE)
+    replay_buffer = ReplayBuffer(maxlen=CONFIG.REPLAY_BUFFER_SIZE)
     optimizer = optim.Adam(q_net.parameters())
     get_epsilon = get_linear_anneal_func(
-        ARGS.EPSILON_START, ARGS.EPSILON_END, ARGS.EPSILON_DURATION
+        CONFIG.EPSILON_START, CONFIG.EPSILON_END, CONFIG.EPSILON_DURATION
     )
 
     # Load trained agent
-    if ARGS.LOAD_PATH:
-        state_dict = torch.load(ARGS.LOAD_PATH)
+    if CONFIG.LOAD_PATH:
+        state_dict = torch.load(CONFIG.LOAD_PATH)
         q_net.load_state_dict(state_dict["q_net"])
         optimizer.load_state_dict(state_dict["optimizer"])
 
-    if ARGS.USE_WANDB:
+    if CONFIG.USE_WANDB:
         wandb.watch(q_net)
 
     episode_return = 0
     episode_i = 0
     eval_episode_i = 0
-    for step_i in range(ARGS.ENV_STEPS + 1):
+    for step_i in range(CONFIG.ENV_STEPS + 1):
         # Select and make action
         epsilon = get_epsilon(step_i)
         action = select_action(env, obs, q_net, epsilon)
@@ -319,23 +319,23 @@ def main():
 
         # Update replay buffer and train QNetwork
         replay_buffer.append(Transition(obs, action, rew, next_obs, done))
-        if len(replay_buffer) >= ARGS.MIN_REPLAY_BUFFER_SIZE:
+        if len(replay_buffer) >= CONFIG.MIN_REPLAY_BUFFER_SIZE:
             obs_b, action_b, rew_b, next_obs_b, done_b = replay_buffer.get_torch_batch(
-                ARGS.BATCH_SIZE
+                CONFIG.BATCH_SIZE
             )
-            assert obs_b.shape == (ARGS.BATCH_SIZE, env.observation_space.shape[0])
-            assert action_b.shape == (ARGS.BATCH_SIZE,)
-            assert rew_b.shape == (ARGS.BATCH_SIZE,)
-            assert next_obs_b.shape == (ARGS.BATCH_SIZE, env.observation_space.shape[0])
-            assert done_b.shape == (ARGS.BATCH_SIZE,)
+            assert obs_b.shape == (CONFIG.BATCH_SIZE, env.observation_space.shape[0])
+            assert action_b.shape == (CONFIG.BATCH_SIZE,)
+            assert rew_b.shape == (CONFIG.BATCH_SIZE,)
+            assert next_obs_b.shape == (CONFIG.BATCH_SIZE, env.observation_space.shape[0])
+            assert done_b.shape == (CONFIG.BATCH_SIZE,)
 
             target = (
                 rew_b
-                + (1 - done_b) * ARGS.DISCOUNT * target_q_net(next_obs_b).max(dim=-1)[0]
+                + (1 - done_b) * CONFIG.DISCOUNT * target_q_net(next_obs_b).max(dim=-1)[0]
             )
             prediction = q_net(obs_b).gather(1, action_b.unsqueeze(1)).squeeze(1)
-            assert target.shape == (ARGS.BATCH_SIZE,)
-            assert prediction.shape == (ARGS.BATCH_SIZE,)
+            assert target.shape == (CONFIG.BATCH_SIZE,)
+            assert prediction.shape == (CONFIG.BATCH_SIZE,)
 
             td_loss = F.smooth_l1_loss(prediction, target)
             assert td_loss.shape == ()
@@ -350,13 +350,13 @@ def main():
                     episode_i, step_i, td_loss.item()
                 )
             )
-            if ARGS.USE_TENSORBOARD:
+            if CONFIG.USE_TENSORBOARD:
                 writer.add_scalar("td_loss", td_loss.item(), step_i)
-            if ARGS.USE_WANDB:
+            if CONFIG.USE_WANDB:
                 wandb.log({"TD Loss": td_loss.item()}, step=step_i)
 
         # Evaluate agent periodically
-        if step_i % ARGS.EVAL_FREQUENCY == 0:
+        if step_i % CONFIG.EVAL_FREQUENCY == 0:
             eval_done = False
             eval_obs = eval_env.reset()
             eval_episode_return = 0
@@ -370,11 +370,11 @@ def main():
                     step_i, int(eval_episode_return)
                 )
             )
-            if ARGS.USE_TENSORBOARD:
+            if CONFIG.USE_TENSORBOARD:
                 writer.add_scalar(
                     "eval/episode_return", eval_episode_return, eval_episode_i
                 )
-            if ARGS.USE_WANDB:
+            if CONFIG.USE_WANDB:
                 wandb.log(
                     {
                         "Evaluation Episode Return": eval_episode_return,
@@ -385,7 +385,7 @@ def main():
 
             eval_episode_i += 1
 
-        if step_i % ARGS.TARGET_NET_UPDATE_RATE == 0:
+        if step_i % CONFIG.TARGET_NET_UPDATE_RATE == 0:
             target_q_net = copy.deepcopy(q_net)
 
         episode_return += rew
@@ -397,9 +397,9 @@ def main():
                     episode_i, step_i, int(episode_return)
                 )
             )
-            if ARGS.USE_TENSORBOARD:
+            if CONFIG.USE_TENSORBOARD:
                 writer.add_scalar("episode_return", episode_return, episode_i)
-            if ARGS.USE_WANDB:
+            if CONFIG.USE_WANDB:
                 wandb.log(
                     {"Episode Return": episode_return, "Episode Count": episode_i},
                     step=step_i,
@@ -412,15 +412,15 @@ def main():
         obs = next_obs
 
     # Save trained agent
-    if ARGS.SAVE_PATH:
+    if CONFIG.SAVE_PATH:
         # Create specified directory if it does not exist yet
-        SAVE_DIRECTORY = "/".join(ARGS.SAVE_PATH.split("/")[:-1])
+        SAVE_DIRECTORY = "/".join(CONFIG.SAVE_PATH.split("/")[:-1])
         if not os.path.exists(SAVE_DIRECTORY):
             os.makedirs(SAVE_DIRECTORY)
 
         torch.save(
             {"q_net": q_net.state_dict(), "optimizer": optimizer.state_dict()},
-            ARGS.SAVE_PATH,
+            CONFIG.SAVE_PATH,
         )
 
 
