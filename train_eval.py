@@ -305,7 +305,7 @@ def main():
 
     episode_return = 0
     episode_i = 0
-    for step_i in range(ARGS.ENV_STEPS+1):
+    for step_i in range(ARGS.ENV_STEPS + 1):
         # Select and make action
         epsilon = get_epsilon(step_i)
         action = select_action(env, obs, q_net, epsilon)
@@ -347,10 +347,7 @@ def main():
             if ARGS.USE_TENSORBOARD:
                 writer.add_scalar("td_loss", td_loss.item(), step_i)
             if ARGS.USE_WANDB:
-                wandb.log(
-                    {"TD Loss": td_loss.item()},
-                    step=step_i,
-                )
+                wandb.log({"TD Loss": td_loss.item()}, step=step_i)
 
         # Evaluate agent periodically
         if step_i % ARGS.EVAL_FREQUENCY == 0:
@@ -368,7 +365,6 @@ def main():
                 )
             )
             # TODO(seungjaeryanlee): Log to TensorBoard and W&B
-
 
         if step_i % ARGS.TARGET_NET_UPDATE_RATE == 0:
             target_q_net = copy.deepcopy(q_net)
@@ -403,10 +399,11 @@ def main():
         if not os.path.exists(SAVE_DIRECTORY):
             os.makedirs(SAVE_DIRECTORY)
 
-        torch.save({
-            "q_net": q_net.state_dict(),
-            "optimizer": optimizer.state_dict(),
-        }, ARGS.SAVE_PATH)
+        torch.save(
+            {"q_net": q_net.state_dict(), "optimizer": optimizer.state_dict()},
+            ARGS.SAVE_PATH,
+        )
+
 
 if __name__ == "__main__":
     main()
