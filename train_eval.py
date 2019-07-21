@@ -12,6 +12,11 @@ configuration file with the below command:
 python train_eval.py -c cartpole.conf
 ```
 
+For a reproducible run, use the RANDOM_SEED flag.
+```
+python train_eval.py -c cartpole.conf --RANDOM_SEED=1
+```
+
 To save a trained agent, use the SAVE_PATH flag.
 ```
 python train_eval.py -c cartpole.conf --SAVE_PATH=saves/cartpole.pth
