@@ -1,6 +1,8 @@
 """Various logging modules."""
 import logging
 
+import coloredlogs
+
 
 def get_logger():
     """Initialize Python logger that outputs to file and console."""
@@ -10,7 +12,7 @@ def get_logger():
     fh.setLevel(logging.DEBUG)
     ch = logging.StreamHandler()
     ch.setLevel(logging.INFO)
-    formatter = logging.Formatter(
+    formatter = coloredlogs.ColoredFormatter(
         "%(asctime)s | %(filename)12s | %(levelname)8s | %(message)s"
     )
     fh.setFormatter(formatter)
