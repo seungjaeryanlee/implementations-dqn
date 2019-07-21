@@ -9,22 +9,22 @@ Running
 You can train the DQN agent on CartPole with the inluded
 configuration file with the below command:
 ```
-python run.py -c cartpole.conf
+python train_eval.py -c cartpole.conf
 ```
 
 To save a trained agent, use the SAVE_PATH flag.
 ```
-python run.py -c cartpole.conf --SAVE_PATH=saves/cartpole.pth
+python train_eval.py -c cartpole.conf --SAVE_PATH=saves/cartpole.pth
 ```
 
 To load a trained agent, use the LOAD_PATH flag.
 ```
-python run.py -c cartpole.conf --LOAD_PATH=saves/cartpole.pth
+python train_eval.py -c cartpole.conf --LOAD_PATH=saves/cartpole.pth
 ```
 
 To enable logging to TensorBoard or W&B, use appropriate flags.
 ```
-python run.py -c cartpole.conf --USE_TENSORBOARD --USE_WANDB
+python train_eval.py -c cartpole.conf --USE_TENSORBOARD --USE_WANDB
 ```
 
 
