@@ -131,7 +131,11 @@ def main():
     print("| Hyperparameters                | Value                          |")
     print("+--------------------------------+--------------------------------+")
     for arg in vars(CONFIG):
-        print("| {:30} | {:<30} |".format(arg, getattr(CONFIG, arg)))
+        print(
+            "| {:30} | {:<30} |".format(
+                arg, getattr(CONFIG, arg) if getattr(CONFIG, arg) is not None else ""
+            )
+        )
     print("+--------------------------------+--------------------------------+")
     print()
 
@@ -147,16 +151,19 @@ def main():
 
         wandb.init(project="implementations-dqn", config=CONFIG)
 
-    # Fix random seeds
-    make_reproducible(seed=CONFIG.RANDOM_SEED, use_random=True, use_torch=True)
-
     # Setup environment
     env = gym.make("CartPole-v0")
-    env.seed(CONFIG.RANDOM_SEED)
-    obs = env.reset()
-
     eval_env = gym.make("CartPole-v0")
-    eval_env.seed(CONFIG.RANDOM_SEED)
+
+    # Fix random seeds
+    if CONFIG.RANDOM_SEED is not None:
+        make_reproducible(seed=CONFIG.RANDOM_SEED, use_random=True, use_torch=True)
+        env.seed(CONFIG.RANDOM_SEED)
+        eval_env.seed(CONFIG.RANDOM_SEED)
+    else:
+        logger.warning("Running without a random seed: this run is NOT reproducible.")
+
+    obs = env.reset()
 
     # Setup agent
     q_net = QNetwork(env.observation_space.shape[0], env.action_space.n)
