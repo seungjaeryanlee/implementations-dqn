@@ -5,7 +5,7 @@
 [![isort Build Status](https://img.shields.io/travis/com/seungjaeryanlee/implementations-dqn.svg?label=isort)](https://travis-ci.com/seungjaeryanlee/implementations-dqn)
 [![pytest Build Status](https://img.shields.io/travis/com/seungjaeryanlee/implementations-dqn.svg?label=pytest)](https://travis-ci.com/seungjaeryanlee/implementations-dqn)
 
-This repository is a implementation of the paper [Human-level control through Deep Reinforcement Learning](https://github.com/seungjaeryanlee/implementations/blob/master/papers/dqn.pdf).
+This repository is a implementation of the paper [Human-level control through Deep Reinforcement Learning](/papers.pdf).
 
 For implementations of other deep learning papers, check the centralized [implementations](https://github.com/seungjaeryanlee/implementations) repository!
 
