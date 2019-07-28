@@ -55,7 +55,7 @@ class DQNAgent:
             return self._env.action_space.sample()
 
         # Greedy action
-        q_values = self._dqn_net(torch.FloatTensor(obs))
+        q_values = self._q_net(torch.FloatTensor(obs))
         return q_values.argmax().item()
 
     def train(
@@ -77,22 +77,19 @@ class DQNAgent:
 
         """
         obs_b, action_b, rew_b, next_obs_b, done_b = experiences
-        assert obs_b.shape == (len(experiences), self._env.observation_space.shape[0])
-        assert action_b.shape == (len(experiences),)
-        assert rew_b.shape == (len(experiences),)
-        assert next_obs_b.shape == (
-            len(experiences),
-            self._env.observation_space.shape[0],
-        )
-        assert done_b.shape == (len(experiences),)
+        assert obs_b.shape == (len(obs_b),) + self._env.observation_space.shape
+        assert action_b.shape == (len(obs_b),)
+        assert rew_b.shape == (len(obs_b),)
+        assert next_obs_b.shape == (len(obs_b),) + self._env.observation_space.shape
+        assert done_b.shape == (len(obs_b),)
 
         target = (
             rew_b
             + (1 - done_b) * discount * self._target_q_net(next_obs_b).max(dim=-1)[0]
         )
         prediction = self._q_net(obs_b).gather(1, action_b.unsqueeze(1)).squeeze(1)
-        assert target.shape == (len(experiences),)
-        assert prediction.shape == (len(experiences),)
+        assert target.shape == (len(obs_b),)
+        assert prediction.shape == (len(obs_b),)
 
         td_loss = F.smooth_l1_loss(prediction, target)
         assert td_loss.shape == ()

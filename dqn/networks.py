@@ -64,7 +64,7 @@ class AtariQNetwork(nn.Module):
             nn.ReLU(),
         )
         self.fc_layers = nn.Sequential(
-            nn.Linear(in_dim, 512), nn.ReLU(), nn.Linear(512, out_dim)
+            nn.Linear(3136, 512), nn.ReLU(), nn.Linear(512, out_dim)
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -81,4 +81,8 @@ class AtariQNetwork(nn.Module):
             Output tensor of the network. Q-values of all actions.
 
         """
-        return self.fc_layers(self.conv_layers(x))
+        x = self.conv_layers(x)
+        x = x.view(x.size(0), -1)
+        x = self.fc_layers(x)
+
+        return x
