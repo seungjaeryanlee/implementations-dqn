@@ -62,8 +62,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-from networks import QNetwork
-from replays import ReplayBuffer, Transition
+from dqn.networks import QNetwork
+from dqn.replays import ReplayBuffer, Transition
 from utils import get_linear_anneal_func, get_logger, make_reproducible
 
 
