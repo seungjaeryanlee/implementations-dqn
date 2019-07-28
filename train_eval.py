@@ -51,53 +51,17 @@ env : Environment
 obs : Observation
 rew : Reward
 """
-import copy
 import os
-import random
 
 import configargparse
 import gym
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 
+from dqn.agents import DQNAgent
 from dqn.networks import QNetwork
 from dqn.replays import ReplayBuffer, Transition
 from utils import get_linear_anneal_func, get_logger, make_reproducible
-
-
-def select_action(
-    env: gym.Env, obs: torch.Tensor, q_net: nn.Module, epsilon: float = 0
-) -> int:
-    """Select action based on epsilon-greedy policy.
-
-    Parameters
-    ----------
-    env : gym.Env
-        Environment to train the agent in.
-    obs : torch.Tensor
-        Observation from the current timestep.
-    q_net : nn.Module
-        An action-value network to find the greedy action.
-    epsilon : float
-        Probability of choosing a random action.
-
-    Returns
-    -------
-    action : int
-        The chosen action.
-
-    """
-    assert 0 <= epsilon <= 1
-
-    # Random action
-    if random.random() < epsilon:
-        return env.action_space.sample()
-
-    # Greedy action
-    q_values = q_net(torch.FloatTensor(obs))
-    return q_values.argmax().item()
 
 
 def main():
@@ -167,12 +131,12 @@ def main():
 
     # Setup agent
     q_net = QNetwork(env.observation_space.shape[0], env.action_space.n)
-    target_q_net = copy.deepcopy(q_net)
     replay_buffer = ReplayBuffer(maxlen=CONFIG.REPLAY_BUFFER_SIZE)
     optimizer = optim.Adam(q_net.parameters())
     get_epsilon = get_linear_anneal_func(
         CONFIG.EPSILON_START, CONFIG.EPSILON_END, CONFIG.EPSILON_DURATION
     )
+    dqn_agent = DQNAgent(env, q_net, optimizer)
 
     # Load trained agent
     if CONFIG.LOAD_PATH:
@@ -187,53 +151,27 @@ def main():
     episode_i = 0
     eval_episode_i = 0
     for step_i in range(CONFIG.ENV_STEPS + 1):
-        # Select and make action
+        # Interact with the environment and save the experience
         epsilon = get_epsilon(step_i)
-        action = select_action(env, obs, q_net, epsilon)
+        action = dqn_agent.select_action(obs, epsilon)
         next_obs, rew, done, info = env.step(action)
-
-        # Update replay buffer and train QNetwork
         replay_buffer.append(Transition(obs, action, rew, next_obs, done))
+
+        # Train QNetwork
         if len(replay_buffer) >= CONFIG.MIN_REPLAY_BUFFER_SIZE:
-            obs_b, action_b, rew_b, next_obs_b, done_b = replay_buffer.get_torch_batch(
-                CONFIG.BATCH_SIZE
-            )
-            assert obs_b.shape == (CONFIG.BATCH_SIZE, env.observation_space.shape[0])
-            assert action_b.shape == (CONFIG.BATCH_SIZE,)
-            assert rew_b.shape == (CONFIG.BATCH_SIZE,)
-            assert next_obs_b.shape == (
-                CONFIG.BATCH_SIZE,
-                env.observation_space.shape[0],
-            )
-            assert done_b.shape == (CONFIG.BATCH_SIZE,)
-
-            target = (
-                rew_b
-                + (1 - done_b)
-                * CONFIG.DISCOUNT
-                * target_q_net(next_obs_b).max(dim=-1)[0]
-            )
-            prediction = q_net(obs_b).gather(1, action_b.unsqueeze(1)).squeeze(1)
-            assert target.shape == (CONFIG.BATCH_SIZE,)
-            assert prediction.shape == (CONFIG.BATCH_SIZE,)
-
-            td_loss = F.smooth_l1_loss(prediction, target)
-            assert td_loss.shape == ()
-
-            optimizer.zero_grad()
-            td_loss.backward()
-            optimizer.step()
+            experiences = replay_buffer.get_torch_batch(CONFIG.BATCH_SIZE)
+            td_loss = dqn_agent.train(experiences, discount=CONFIG.DISCOUNT)
 
             # Log td_loss
             logger.debug(
                 "Episode {:4d}  Steps {:5d}  Loss {:6.6f}".format(
-                    episode_i, step_i, td_loss.item()
+                    episode_i, step_i, td_loss
                 )
             )
             if CONFIG.USE_TENSORBOARD:
-                writer.add_scalar("td_loss", td_loss.item(), step_i)
+                writer.add_scalar("td_loss", td_loss, step_i)
             if CONFIG.USE_WANDB:
-                wandb.log({"TD Loss": td_loss.item()}, step=step_i)
+                wandb.log({"TD Loss": td_loss}, step=step_i)
 
         # Evaluate agent periodically
         if step_i % CONFIG.EVAL_FREQUENCY == 0:
@@ -241,7 +179,7 @@ def main():
             eval_obs = eval_env.reset()
             eval_episode_return = 0
             while not eval_done:
-                eval_action = select_action(env, eval_obs, q_net, epsilon=0)
+                eval_action = dqn_agent.select_action(env, eval_obs, epsilon=0)
                 eval_obs, eval_rew, eval_done, info = eval_env.step(eval_action)
                 eval_episode_return += eval_rew
 
@@ -266,7 +204,7 @@ def main():
             eval_episode_i += 1
 
         if step_i % CONFIG.TARGET_NET_UPDATE_RATE == 0:
-            target_q_net = copy.deepcopy(q_net)
+            dqn_agent.update_target_q_net()
 
         episode_return += rew
 
