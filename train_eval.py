@@ -179,7 +179,7 @@ def main():
             eval_obs = eval_env.reset()
             eval_episode_return = 0
             while not eval_done:
-                eval_action = dqn_agent.select_action(env, eval_obs, epsilon=0)
+                eval_action = dqn_agent.select_action(eval_obs, epsilon=0)
                 eval_obs, eval_rew, eval_done, info = eval_env.step(eval_action)
                 eval_episode_return += eval_rew
 
