@@ -6,7 +6,7 @@ import coloredlogs
 
 def get_logger():
     """Initialize Python logger that outputs to file and console."""
-    logger = logging.getLogger()
+    logger = logging.getLogger("main_logger")
     logger.setLevel(logging.DEBUG)
     fh = logging.FileHandler("run.log")
     fh.setLevel(logging.DEBUG)
@@ -19,5 +19,9 @@ def get_logger():
     ch.setFormatter(formatter)
     logger.addHandler(fh)
     logger.addHandler(ch)
+
+    # Fix TensorFlow doubling logs
+    # https://stackoverflow.com/questions/33662648/tensorflow-causes-logging-messages-to-double
+    logger.propagate = False
 
     return logger
