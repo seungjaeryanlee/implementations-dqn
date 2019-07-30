@@ -60,7 +60,7 @@ import torch.optim as optim
 
 from dqn.agents import DQNAgent
 from dqn.networks import QNetwork
-from dqn.replays import ReplayBuffer, Transition
+from dqn.replays import CircularReplayBuffer, Transition
 from utils import get_linear_anneal_func, get_logger, make_reproducible
 
 
@@ -131,7 +131,7 @@ def main():
 
     # Setup agent
     q_net = QNetwork(env.observation_space.shape[0], env.action_space.n)
-    replay_buffer = ReplayBuffer(maxlen=CONFIG.REPLAY_BUFFER_SIZE)
+    replay_buffer = CircularReplayBuffer(env, maxlen=CONFIG.REPLAY_BUFFER_SIZE)
     optimizer = optim.Adam(q_net.parameters())
     get_epsilon = get_linear_anneal_func(
         CONFIG.EPSILON_START, CONFIG.EPSILON_END, CONFIG.EPSILON_DURATION
