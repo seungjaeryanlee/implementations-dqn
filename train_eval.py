@@ -69,6 +69,11 @@ def get_config():
     parser = configargparse.ArgParser()
     parser.add("-c", "--config", required=True, is_config_file=True)
     parser.add(
+        "--ENV_NAME",
+        type=str,
+        help="Full name of the environment, including the mode and version number.",
+    )
+    parser.add(
         "--ENV_STEPS",
         type=int,
         help="Number of environment steps to train the agent on.",
@@ -183,8 +188,8 @@ def main():
         wandb.init(project="implementations-dqn", config=CONFIG)
 
     # Setup environment
-    env = gym.make("CartPole-v0")
-    eval_env = gym.make("CartPole-v0")
+    env = gym.make(CONFIG.ENV_NAME)
+    eval_env = gym.make(CONFIG.ENV_NAME)
 
     # Fix random seeds
     if CONFIG.RANDOM_SEED is not None:

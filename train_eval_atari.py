@@ -85,8 +85,8 @@ def main():
 
     # Setup environment
     # Deterministic-v4 variant: 4(or 3*) frameskip, No repeat action
-    env = gym.make("PongDeterministic-v4")
-    eval_env = gym.make("PongDeterministic-v4")
+    env = gym.make(CONFIG.ENV_NAME)
+    eval_env = gym.make(CONFIG.ENV_NAME)
     # AtariPreprocessing:
     # - Max NOOP on start: 30
     # - Frameskip: 1
