@@ -69,21 +69,73 @@ def main():
     # Setup hyperparameters
     parser = configargparse.ArgParser()
     parser.add("-c", "--config", required=True, is_config_file=True)
-    parser.add("--ENV_STEPS", dest="ENV_STEPS", type=int)
-    parser.add("--REPLAY_BUFFER_SIZE", dest="REPLAY_BUFFER_SIZE", type=int)
-    parser.add("--MIN_REPLAY_BUFFER_SIZE", dest="MIN_REPLAY_BUFFER_SIZE", type=int)
-    parser.add("--BATCH_SIZE", dest="BATCH_SIZE", type=int)
-    parser.add("--DISCOUNT", dest="DISCOUNT", type=float)
-    parser.add("--EPSILON_START", dest="EPSILON_START", type=float)
-    parser.add("--EPSILON_END", dest="EPSILON_END", type=float)
-    parser.add("--EPSILON_DURATION", dest="EPSILON_DURATION", type=int)
-    parser.add("--RANDOM_SEED", dest="RANDOM_SEED", type=int)
-    parser.add("--TARGET_NET_UPDATE_RATE", dest="TARGET_NET_UPDATE_RATE", type=int)
-    parser.add("--EVAL_FREQUENCY", dest="EVAL_FREQUENCY", type=int)
-    parser.add("--SAVE_PATH", dest="SAVE_PATH", type=str, default="")
-    parser.add("--LOAD_PATH", dest="LOAD_PATH", type=str, default="")
-    parser.add("--USE_TENSORBOARD", dest="USE_TENSORBOARD", action="store_true")
-    parser.add("--USE_WANDB", dest="USE_WANDB", action="store_true")
+    parser.add(
+        "--ENV_STEPS",
+        type=int,
+        help="Number of environment steps to train the agent on.",
+    )
+    parser.add(
+        "--REPLAY_BUFFER_SIZE",
+        type=int,
+        help="The capacity of the experience replay buffer.",
+    )
+    parser.add(
+        "--MIN_REPLAY_BUFFER_SIZE",
+        type=int,
+        help="Minimum size of the replay buffer before starting training.",
+    )
+    parser.add(
+        "--BATCH_SIZE",
+        type=int,
+        help="The size of the batch to train the agent on each step.",
+    )
+    parser.add(
+        "--DISCOUNT",
+        type=float,
+        help="Discount factor that scales future rewards. Denoted with gamma",
+    )
+    parser.add(
+        "--EPSILON_START",
+        type=float,
+        help="Starting value of a linearly annealing epsilon.",
+    )
+    parser.add(
+        "--EPSILON_END",
+        type=float,
+        help="Terminal value of a linearly annealing epsilon.",
+    )
+    parser.add(
+        "--EPSILON_DURATION",
+        type=int,
+        help="The duration of linear annealing for epsilon",
+    )
+    parser.add(
+        "--RANDOM_SEED",
+        type=int,
+        help="Random seed to set to guarantee reproducibility.",
+    )
+    parser.add(
+        "--TARGET_NET_UPDATE_RATE",
+        type=int,
+        help="How many steps to wait for each target network update.",
+    )
+    parser.add(
+        "--EVAL_FREQUENCY",
+        type=int,
+        help="How frequently (in environment steps) the agent will be evaluated.",
+    )
+    parser.add("--SAVE_PATH", type=str, default="Save model to given file.")
+    parser.add("--LOAD_PATH", type=str, default="Load model from given file.")
+    parser.add(
+        "--USE_TENSORBOARD",
+        action="store_true",
+        help="Use TensorBoard for offline logging.",
+    )
+    parser.add(
+        "--USE_WANDB",
+        action="store_true",
+        help="Use Weights & Biases for online logging.",
+    )
     CONFIG = parser.parse_args()
     if not hasattr(CONFIG, "USE_TENSORBOARD"):
         CONFIG.USE_TENSORBOARD = False
