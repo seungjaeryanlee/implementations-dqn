@@ -12,7 +12,13 @@ import torch.optim as optim
 
 
 class DQNAgent:
-    def __init__(self, env: gym.Env, q_net: nn.Module, optimizer: optim.Optimizer):
+    def __init__(
+        self,
+        env: gym.Env,
+        q_net: nn.Module,
+        optimizer: optim.Optimizer,
+        device: torch.device,
+    ):
         """
         Deep Q-Networks agent.
 
@@ -24,6 +30,8 @@ class DQNAgent:
             The Q-Network that returns Q-values of all actions given an observation.
         optimizer : optim.Optimzer
             Optimizer for training the DQN network.
+        device : torch.device
+            The device used to train the agent.
 
         """
         self._env = env
@@ -31,6 +39,8 @@ class DQNAgent:
         self._optimizer = optimizer
 
         self._target_q_net = copy.deepcopy(q_net)
+
+        self._device = device
 
     def select_action(self, obs: torch.Tensor, epsilon: float = 0) -> int:
         """Select action based on epsilon-greedy policy.
@@ -55,7 +65,7 @@ class DQNAgent:
             return self._env.action_space.sample()
 
         # Greedy action
-        q_values = self._q_net(torch.FloatTensor(obs))
+        q_values = self._q_net(torch.FloatTensor(obs).to(self._device))
         return q_values.argmax().item()
 
     def train(

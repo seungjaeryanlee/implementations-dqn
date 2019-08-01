@@ -11,16 +11,19 @@ Transition = namedtuple("Transition", ["obs", "action", "rew", "next_obs", "done
 
 
 class ReplayBuffer:
-    def __init__(self, maxlen: int):
+    def __init__(self, maxlen: int, device: torch.device):
         """Initialize simple replay buffer.
 
         Parameters
         ----------
         maxlen : int
             The capacity of the replay buffer.
+        device : torch.device
+            Device that the agent will use to train with this replay buffer.
 
         """
         self.buffer = deque(maxlen=maxlen)
+        self._device = device
 
     def __len__(self):
         return len(self.buffer)
@@ -63,23 +66,25 @@ class ReplayBuffer:
         """
         transition_b = random.sample(self.buffer, batch_size)
         obs_b, action_b, rew_b, next_obs_b, done_b = zip(*transition_b)
-        obs_b = torch.FloatTensor(obs_b)
-        action_b = torch.LongTensor(action_b)
-        rew_b = torch.FloatTensor(rew_b)
-        next_obs_b = torch.FloatTensor(next_obs_b)
-        done_b = torch.FloatTensor(done_b)
+        obs_b = torch.FloatTensor(obs_b).to(self._device)
+        action_b = torch.LongTensor(action_b).to(self._device)
+        rew_b = torch.FloatTensor(rew_b).to(self._device)
+        next_obs_b = torch.FloatTensor(next_obs_b).to(self._device)
+        done_b = torch.FloatTensor(done_b).to(self._device)
 
         return obs_b, action_b, rew_b, next_obs_b, done_b
 
 
 class CircularReplayBuffer:
-    def __init__(self, env: gym.Env, maxlen: int):
+    def __init__(self, env: gym.Env, maxlen: int, device: torch.device):
         """Initialize circular replay buffer.
 
         Parameters
         ----------
         maxlen : int
             The capacity of the replay buffer.
+        device : torch.device
+            Device that the agent will use to train with this replay buffer.
 
         """
         sample_obs = env.observation_space.sample()
@@ -91,6 +96,8 @@ class CircularReplayBuffer:
         self.maxlen = maxlen
         self.curlen = 0
         self.index = 0
+
+        self._device = device
 
     def __len__(self):
         return self.curlen
@@ -139,11 +146,12 @@ class CircularReplayBuffer:
         else:
             indices = np.random.randint(low=0, high=self.maxlen, size=batch_size)
         transition_b = np.take(self.buffer, indices, axis=0)
+
         obs_b, action_b, rew_b, next_obs_b, done_b = zip(*transition_b)
-        obs_b = torch.FloatTensor(obs_b)
-        action_b = torch.LongTensor(action_b)
-        rew_b = torch.FloatTensor(rew_b)
-        next_obs_b = torch.FloatTensor(next_obs_b)
-        done_b = torch.FloatTensor(done_b)
+        obs_b = torch.FloatTensor(obs_b).to(self._device)
+        action_b = torch.LongTensor(action_b).to(self._device)
+        rew_b = torch.FloatTensor(rew_b).to(self._device)
+        next_obs_b = torch.FloatTensor(next_obs_b).to(self._device)
+        done_b = torch.FloatTensor(done_b).to(self._device)
 
         return obs_b, action_b, rew_b, next_obs_b, done_b

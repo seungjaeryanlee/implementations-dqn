@@ -201,14 +201,19 @@ def main():
 
     obs = env.reset()
 
+    # Choose CPU or GPU
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
     # Setup agent
-    q_net = QNetwork(env.observation_space.shape[0], env.action_space.n)
-    replay_buffer = CircularReplayBuffer(env, maxlen=CONFIG.REPLAY_BUFFER_SIZE)
+    q_net = QNetwork(env.observation_space.shape[0], env.action_space.n).to(device)
+    replay_buffer = CircularReplayBuffer(
+        env, maxlen=CONFIG.REPLAY_BUFFER_SIZE, device=device
+    )
     optimizer = optim.Adam(q_net.parameters())
     get_epsilon = get_linear_anneal_func(
         CONFIG.EPSILON_START, CONFIG.EPSILON_END, CONFIG.EPSILON_DURATION
     )
-    dqn_agent = DQNAgent(env, q_net, optimizer)
+    dqn_agent = DQNAgent(env, q_net, optimizer, device)
 
     # Load trained agent
     if CONFIG.LOAD_PATH:
