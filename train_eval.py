@@ -119,12 +119,20 @@ def get_config():
         help="How many steps to wait for each target network update.",
     )
     parser.add(
+        "--LOG_FREQUENCY",
+        type=int,
+        help=(
+            "How frequently (in environment steps) to log various training "
+            "metrics. Not relevant to metrics that are episode-specific."
+        ),
+    )
+    parser.add(
         "--EVAL_FREQUENCY",
         type=int,
         help="How frequently (in environment steps) the agent will be evaluated.",
     )
-    parser.add("--SAVE_PATH", type=str, default="Save model to given file.")
-    parser.add("--LOAD_PATH", type=str, default="Load model from given file.")
+    parser.add("--SAVE_PATH", type=str, help="Save model to given file.")
+    parser.add("--LOAD_PATH", type=str, help="Load model from given file.")
     parser.add(
         "--USE_TENSORBOARD",
         action="store_true",
@@ -222,15 +230,16 @@ def main():
             td_loss = dqn_agent.train(experiences, discount=CONFIG.DISCOUNT)
 
             # Log td_loss
-            logger.debug(
-                "Episode {:4d}  Steps {:5d}  Loss {:6.6f}".format(
-                    episode_i, step_i, td_loss
+            if step_i % CONFIG.LOG_FREQUENCY == 0:
+                logger.debug(
+                    "Episode {:4d}  Steps {:5d}  Loss {:6.6f}".format(
+                        episode_i, step_i, td_loss
+                    )
                 )
-            )
-            if CONFIG.USE_TENSORBOARD:
-                writer.add_scalar("td_loss", td_loss, step_i)
-            if CONFIG.USE_WANDB:
-                wandb.log({"TD Loss": td_loss}, step=step_i)
+                if CONFIG.USE_TENSORBOARD:
+                    writer.add_scalar("td_loss", td_loss, step_i)
+                if CONFIG.USE_WANDB:
+                    wandb.log({"TD Loss": td_loss}, step=step_i)
 
         # Evaluate agent periodically
         if step_i % CONFIG.EVAL_FREQUENCY == 0:
