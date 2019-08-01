@@ -64,9 +64,8 @@ from dqn.replays import CircularReplayBuffer, Transition
 from utils import get_linear_anneal_func, get_logger, make_reproducible
 
 
-def main():
-    """Run only when this file is called directly."""
-    # Setup hyperparameters
+def get_config():
+    """Parse configuration from config file and arguments."""
     parser = configargparse.ArgParser()
     parser.add("-c", "--config", required=True, is_config_file=True)
     parser.add(
@@ -154,6 +153,14 @@ def main():
         )
     print("+--------------------------------+--------------------------------+")
     print()
+
+    return CONFIG
+
+
+def main():
+    """Run only when this file is called directly."""
+    # Setup hyperparameters
+    CONFIG = get_config()
 
     # Log to File, Console, TensorBoard, W&B
     logger = get_logger()
