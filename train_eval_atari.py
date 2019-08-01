@@ -53,7 +53,6 @@ rew : Reward
 """
 import os
 
-import configargparse
 import gym
 import numpy as np
 import torch
@@ -63,47 +62,14 @@ from dqn.agents import DQNAgent
 from dqn.networks import AtariQNetwork
 from dqn.replays import CircularReplayBuffer, Transition
 from environments import AtariPreprocessing, FrameStack4
+from train_eval import get_config
 from utils import get_linear_anneal_func, get_logger, make_reproducible
 
 
 def main():
     """Run only when this file is called directly."""
     # Setup hyperparameters
-    parser = configargparse.ArgParser()
-    parser.add("-c", "--config", required=True, is_config_file=True)
-    parser.add("--ENV_STEPS", dest="ENV_STEPS", type=int)
-    parser.add("--REPLAY_BUFFER_SIZE", dest="REPLAY_BUFFER_SIZE", type=int)
-    parser.add("--MIN_REPLAY_BUFFER_SIZE", dest="MIN_REPLAY_BUFFER_SIZE", type=int)
-    parser.add("--BATCH_SIZE", dest="BATCH_SIZE", type=int)
-    parser.add("--DISCOUNT", dest="DISCOUNT", type=float)
-    parser.add("--EPSILON_START", dest="EPSILON_START", type=float)
-    parser.add("--EPSILON_END", dest="EPSILON_END", type=float)
-    parser.add("--EPSILON_DURATION", dest="EPSILON_DURATION", type=int)
-    parser.add("--RANDOM_SEED", dest="RANDOM_SEED", type=int)
-    parser.add("--TARGET_NET_UPDATE_RATE", dest="TARGET_NET_UPDATE_RATE", type=int)
-    parser.add("--EVAL_FREQUENCY", dest="EVAL_FREQUENCY", type=int)
-    parser.add("--SAVE_PATH", dest="SAVE_PATH", type=str, default="")
-    parser.add("--LOAD_PATH", dest="LOAD_PATH", type=str, default="")
-    parser.add("--USE_TENSORBOARD", dest="USE_TENSORBOARD", action="store_true")
-    parser.add("--USE_WANDB", dest="USE_WANDB", action="store_true")
-    CONFIG = parser.parse_args()
-    if not hasattr(CONFIG, "USE_TENSORBOARD"):
-        CONFIG.USE_TENSORBOARD = False
-    if not hasattr(CONFIG, "USE_WANDB"):
-        CONFIG.USE_WANDB = False
-
-    print()
-    print("+--------------------------------+--------------------------------+")
-    print("| Hyperparameters                | Value                          |")
-    print("+--------------------------------+--------------------------------+")
-    for arg in vars(CONFIG):
-        print(
-            "| {:30} | {:<30} |".format(
-                arg, getattr(CONFIG, arg) if getattr(CONFIG, arg) is not None else ""
-            )
-        )
-    print("+--------------------------------+--------------------------------+")
-    print()
+    CONFIG = get_config()
 
     # Log to File, Console, TensorBoard, W&B
     logger = get_logger()
@@ -192,17 +158,17 @@ def main():
             td_loss = dqn_agent.train(experiences, discount=CONFIG.DISCOUNT)
 
             # Log td_loss
-            # TODO(seungjaeryanlee): Don't log too often: add parameter
-            # TODO(seungjaeryanlee): Add option of disabling file logger
-            logger.debug(
-                "Episode {:4d}  Steps {:5d}  Loss {:6.6f}".format(
-                    episode_i, step_i, td_loss
+            if step_i % CONFIG.LOG_FREQUENCY == 0:
+                # TODO(seungjaeryanlee): Add option of disabling file logger
+                logger.debug(
+                    "Episode {:4d}  Steps {:5d}  Loss {:6.6f}".format(
+                        episode_i, step_i, td_loss
+                    )
                 )
-            )
-            if CONFIG.USE_TENSORBOARD:
-                writer.add_scalar("td_loss", td_loss, step_i)
-            if CONFIG.USE_WANDB:
-                wandb.log({"TD Loss": td_loss}, step=step_i)
+                if CONFIG.USE_TENSORBOARD:
+                    writer.add_scalar("td_loss", td_loss, step_i)
+                if CONFIG.USE_WANDB:
+                    wandb.log({"TD Loss": td_loss}, step=step_i)
 
         # Evaluate agent periodically
         if step_i % CONFIG.EVAL_FREQUENCY == 0:
