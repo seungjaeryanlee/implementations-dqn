@@ -183,8 +183,9 @@ class CircularReplayBuffer:
         """
         indices = np.random.randint(low=0, high=self.curlen, size=batch_size)
         transition_b = self.buffer[indices, ...]
+        assert transition_b.shape == (batch_size, 5)
 
-        obs_b, action_b, rew_b, next_obs_b, done_b = zip(*transition_b)
+        obs_b, action_b, rew_b, next_obs_b, done_b = transition_b.T
 
         return obs_b, action_b, rew_b, next_obs_b, done_b
 
