@@ -184,8 +184,16 @@ class CircularReplayBuffer:
         indices = np.random.randint(low=0, high=self.curlen, size=batch_size)
         transition_b = self.buffer[indices, ...]
         assert transition_b.shape == (batch_size, 5)
-
         obs_b, action_b, rew_b, next_obs_b, done_b = transition_b.T
+
+        # Need to change dtype from object to float
+        # https://stackoverflow.com/a/19471906/2577392
+        # TODO(seungjaeryanlee): Profile to check if transition_b[:, 0] is better
+        obs_b = np.vstack(obs_b).astype(np.float)
+        action_b = np.vstack(action_b).astype(np.float)
+        rew_b = np.vstack(rew_b).astype(np.float)
+        next_obs_b = np.vstack(next_obs_b).astype(np.float)
+        done_b = np.vstack(done_b).astype(np.float)
 
         return obs_b, action_b, rew_b, next_obs_b, done_b
 
