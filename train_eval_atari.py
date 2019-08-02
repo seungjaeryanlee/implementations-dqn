@@ -98,9 +98,10 @@ def main():
     # Stack four frames
     env = FrameStack4(env)
     eval_env = FrameStack4(eval_env)
-    # TODO(seungajaeryanlee): Does "action repeat" and "update frequency" parameter
+    # TODO(seungjaeryanlee): Does "action repeat" and "update frequency" parameter
     #                         in paper mean separate things? Should I wait for
     #                         16 actions before each update?
+    # TODO(seungjaeryanlee): Preprocessing: average of two frames
 
     # Fix random seeds
     if CONFIG.RANDOM_SEED is not None:
@@ -118,9 +119,8 @@ def main():
         logger.warning("GPU not available: this run cound be slow.")
 
     # Setup agent
-    # TODO(seungjaeryanlee): = Number of Frames stacked
-    # TODO(seungjaeryanlee): env.action_space.n returns 20?
-    q_net = AtariQNetwork(4, 6).to(device)
+    # TODO(seungjaeryanlee): Number of Frames stacked as parameter
+    q_net = AtariQNetwork(4, env.action_space.n).to(device)
     replay_buffer = CircularReplayBuffer(
         env, maxlen=CONFIG.REPLAY_BUFFER_SIZE, device=device
     )
