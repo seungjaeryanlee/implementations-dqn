@@ -65,8 +65,17 @@ class ReplayBuffer:
             Batched terminal booleans.
 
         """
-        transition_b = random.sample(self.buffer, batch_size)
-        obs_b, action_b, rew_b, next_obs_b, done_b = zip(*transition_b)
+        transition_b = np.array(random.sample(self.buffer, batch_size))
+        obs_b, action_b, rew_b, next_obs_b, done_b = transition_b.T
+
+        # Need to change dtype from object to float
+        # https://stackoverflow.com/a/19471906/2577392
+        # TODO(seungjaeryanlee): Profile to check if transition_b[:, 0] is better
+        obs_b = np.vstack(obs_b).astype(np.float)
+        action_b = np.vstack(action_b).astype(np.float)
+        rew_b = np.vstack(rew_b).astype(np.float)
+        next_obs_b = np.vstack(next_obs_b).astype(np.float)
+        done_b = np.vstack(done_b).astype(np.float)
 
         return obs_b, action_b, rew_b, next_obs_b, done_b
 
@@ -94,8 +103,7 @@ class ReplayBuffer:
             Batched terminal booleans.
 
         """
-        transition_b = random.sample(self.buffer, batch_size)
-        obs_b, action_b, rew_b, next_obs_b, done_b = zip(*transition_b)
+        obs_b, action_b, rew_b, next_obs_b, done_b = self.get_numpy_batch(batch_size)
         obs_b = torch.FloatTensor(obs_b).to(self._device)
         action_b = torch.LongTensor(action_b).to(self._device)
         rew_b = torch.FloatTensor(rew_b).to(self._device)
