@@ -53,15 +53,15 @@ class ReplayBuffer:
 
         Returns
         -------
-        obs_b : torch.FloatTensor
+        obs_b : np.array
             Batched observations.
-        action_b : torch.LongTensor
+        action_b : np.array
             Batched actions.
-        rew_b : torch.FloatTensor
+        rew_b : np.array
             Batched rewards.
-        next_obs_b : torch.FloatTensor
+        next_obs_b : np.array
             Batched observations of the next step.
-        done_b : torch.FloatTensor
+        done_b : np.array
             Batched terminal booleans.
 
         """
@@ -169,15 +169,15 @@ class CircularReplayBuffer:
 
         Returns
         -------
-        obs_b : torch.FloatTensor
+        obs_b : np.array
             Batched observations.
-        action_b : torch.LongTensor
+        action_b : np.array
             Batched actions.
-        rew_b : torch.FloatTensor
+        rew_b : np.array
             Batched rewards.
-        next_obs_b : torch.FloatTensor
+        next_obs_b : np.array
             Batched observations of the next step.
-        done_b : torch.FloatTensor
+        done_b : np.array
             Batched terminal booleans.
 
         """
