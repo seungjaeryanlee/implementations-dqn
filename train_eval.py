@@ -203,6 +203,8 @@ def main():
 
     # Choose CPU or GPU
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    if not torch.cuda.is_available():
+        logger.warning("GPU not available: this run cound be slow.")
 
     # Setup agent
     q_net = QNetwork(env.observation_space.shape[0], env.action_space.n).to(device)
@@ -281,6 +283,8 @@ def main():
 
             eval_episode_i += 1
 
+        # Update target network periodically
+        # TODO(seungjaeryanlee): RATE -> FREQUENCY
         if step_i % CONFIG.TARGET_NET_UPDATE_RATE == 0:
             dqn_agent.update_target_q_net()
 
@@ -288,6 +292,7 @@ def main():
 
         # If episode is finished
         if done:
+            # Log episode metrics
             logger.info(
                 "Episode {:4d}  Steps {:5d}  Return {:4d}".format(
                     episode_i, step_i, int(episode_return)
@@ -300,6 +305,8 @@ def main():
                     {"Episode Return": episode_return, "Episode Count": episode_i},
                     step=step_i,
                 )
+
+            # Prepare for new episode
             env.reset()
             episode_return = 0
             episode_i += 1
