@@ -70,7 +70,6 @@ class ReplayBuffer:
 
         # Need to change dtype from object to float
         # https://stackoverflow.com/a/19471906/2577392
-        # TODO(seungjaeryanlee): Profile to check if transition_b[:, 0] is better
         obs_b = np.vstack([np.expand_dims(obs, 0) for obs in obs_b]).astype(np.float)
         action_b = np.vstack(action_b).astype(np.float)
         rew_b = np.vstack(rew_b).astype(np.float)
@@ -203,7 +202,6 @@ class CircularReplayBuffer:
 
         # Need to change dtype from object to float
         # https://stackoverflow.com/a/19471906/2577392
-        # TODO(seungjaeryanlee): Profile to check if transition_b[:, 0] is better
         obs_b = np.vstack([np.expand_dims(obs, 0) for obs in obs_b]).astype(np.float)
         action_b = np.vstack(action_b).astype(np.float)
         rew_b = np.vstack(rew_b).astype(np.float)
