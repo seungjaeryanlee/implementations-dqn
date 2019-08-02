@@ -131,6 +131,7 @@ class CircularReplayBuffer:
         for i in range(maxlen):
             self.buffer[i] = copy.deepcopy(stub_transition)
         assert not (self.buffer[0] is self.buffer[1])
+        self.buffer = np.array(self.buffer)
 
         self.maxlen = maxlen
         self.curlen = 0
@@ -181,7 +182,7 @@ class CircularReplayBuffer:
 
         """
         indices = np.random.randint(low=0, high=self.curlen, size=batch_size)
-        transition_b = np.take(self.buffer, indices, axis=0)
+        transition_b = self.buffer[indices, ...]
 
         obs_b, action_b, rew_b, next_obs_b, done_b = zip(*transition_b)
 
