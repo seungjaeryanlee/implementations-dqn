@@ -1,4 +1,5 @@
 """Experience replay buffers for Deep Q-Network."""
+import copy
 import random
 from collections import deque, namedtuple
 from typing import Tuple
@@ -87,11 +88,20 @@ class CircularReplayBuffer:
             Device that the agent will use to train with this replay buffer.
 
         """
-        sample_obs = env.observation_space.sample()
-        sample_action = env.action_space.sample()
-        self.buffer = np.array(
-            [Transition(sample_obs, sample_action, 0, sample_obs, False)] * maxlen
+        assert maxlen > 0
+
+        # Fill buffer with random transitions to make sure enough memory exists
+        stub_transition = Transition(
+            env.observation_space.sample(),
+            env.action_space.sample(),
+            0,
+            env.observation_space.sample(),
+            False,
         )
+        self.buffer = [None] * maxlen
+        for i in range(maxlen):
+            self.buffer[i] = copy.deepcopy(stub_transition)
+        assert not (self.buffer[0] is self.buffer[1])
 
         self.maxlen = maxlen
         self.curlen = 0
