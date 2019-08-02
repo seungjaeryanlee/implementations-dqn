@@ -88,18 +88,17 @@ class DQNAgent:
         """
         obs_b, action_b, rew_b, next_obs_b, done_b = experiences
         assert obs_b.shape == (len(obs_b),) + self._env.observation_space.shape
-        assert action_b.shape == (len(obs_b),)
-        assert rew_b.shape == (len(obs_b),)
+        assert action_b.shape == (len(obs_b), 1)
+        assert rew_b.shape == (len(obs_b), 1)
         assert next_obs_b.shape == (len(obs_b),) + self._env.observation_space.shape
-        assert done_b.shape == (len(obs_b),)
+        assert done_b.shape == (len(obs_b), 1)
 
-        target = (
-            rew_b
-            + (1 - done_b) * discount * self._target_q_net(next_obs_b).max(dim=-1)[0]
-        )
-        prediction = self._q_net(obs_b).gather(1, action_b.unsqueeze(1)).squeeze(1)
-        assert target.shape == (len(obs_b),)
-        assert prediction.shape == (len(obs_b),)
+        target = rew_b + (1 - done_b) * discount * self._target_q_net(next_obs_b).max(
+            dim=-1
+        )[0].unsqueeze(1)
+        prediction = self._q_net(obs_b).gather(1, action_b)
+        assert target.shape == (len(obs_b), 1)
+        assert prediction.shape == (len(obs_b), 1)
 
         td_loss = F.smooth_l1_loss(prediction, target)
         assert td_loss.shape == ()
