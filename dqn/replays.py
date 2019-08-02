@@ -163,7 +163,7 @@ class CircularReplayBuffer:
         """
         assert type(transition) == Transition
         self.buffer[self.index] = transition
-        if self.curlen <= self.maxlen:
+        if self.curlen < self.maxlen:
             self.curlen += 1
         self.index = (self.index + 1) % self.maxlen
 
