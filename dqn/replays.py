@@ -41,6 +41,35 @@ class ReplayBuffer:
         assert type(transition) == Transition
         self.buffer.append(transition)
 
+    def get_numpy_batch(
+        self, batch_size: int
+    ) -> Tuple[np.array, np.array, np.array, np.array, np.array]:
+        """Return a randomly selected batch in numpy.array format.
+
+        Parameters
+        ----------
+        batch_size : int
+            The size of the output batches.
+
+        Returns
+        -------
+        obs_b : torch.FloatTensor
+            Batched observations.
+        action_b : torch.LongTensor
+            Batched actions.
+        rew_b : torch.FloatTensor
+            Batched rewards.
+        next_obs_b : torch.FloatTensor
+            Batched observations of the next step.
+        done_b : torch.FloatTensor
+            Batched terminal booleans.
+
+        """
+        transition_b = random.sample(self.buffer, batch_size)
+        obs_b, action_b, rew_b, next_obs_b, done_b = zip(*transition_b)
+
+        return obs_b, action_b, rew_b, next_obs_b, done_b
+
     def get_torch_batch(
         self, batch_size: int
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
@@ -127,10 +156,10 @@ class CircularReplayBuffer:
             self.curlen += 1
         self.index = (self.index + 1) % self.maxlen
 
-    def get_torch_batch(
+    def get_numpy_batch(
         self, batch_size: int
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        """Return a randomly selected batch in torch.Tensor format.
+    ) -> Tuple[np.array, np.array, np.array, np.array, np.array]:
+        """Return a randomly selected batch in numpy.array format.
 
         Parameters
         ----------
@@ -155,6 +184,34 @@ class CircularReplayBuffer:
         transition_b = np.take(self.buffer, indices, axis=0)
 
         obs_b, action_b, rew_b, next_obs_b, done_b = zip(*transition_b)
+
+        return obs_b, action_b, rew_b, next_obs_b, done_b
+
+    def get_torch_batch(
+        self, batch_size: int
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Return a randomly selected batch in torch.Tensor format.
+
+        Parameters
+        ----------
+        batch_size : int
+            The size of the output batches.
+
+        Returns
+        -------
+        obs_b : torch.FloatTensor
+            Batched observations.
+        action_b : torch.LongTensor
+            Batched actions.
+        rew_b : torch.FloatTensor
+            Batched rewards.
+        next_obs_b : torch.FloatTensor
+            Batched observations of the next step.
+        done_b : torch.FloatTensor
+            Batched terminal booleans.
+
+        """
+        obs_b, action_b, rew_b, next_obs_b, done_b = self.get_numpy_batch(batch_size)
         obs_b = torch.FloatTensor(obs_b).to(self._device)
         action_b = torch.LongTensor(action_b).to(self._device)
         rew_b = torch.FloatTensor(rew_b).to(self._device)
