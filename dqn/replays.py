@@ -79,6 +79,11 @@ class ReplayBuffer:
         )
         done_b = np.vstack(done_b).astype(np.float)
 
+        # NOTE (seungjaeryanlee): Observation normalization is done here:
+        #                         rename or refactor to make this fact clearer!
+        obs_b /= 255
+        next_obs_b /= 255
+
         return obs_b, action_b, rew_b, next_obs_b, done_b
 
     def get_torch_batch(
@@ -206,6 +211,11 @@ class CircularReplayBuffer:
             np.float
         )
         done_b = np.vstack(done_b).astype(np.float)
+
+        # NOTE (seungjaeryanlee): Observation normalization is done here:
+        #                         rename or refactor to make this fact clearer!
+        obs_b /= 255
+        next_obs_b /= 255
 
         return obs_b, action_b, rew_b, next_obs_b, done_b
 
