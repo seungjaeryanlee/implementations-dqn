@@ -79,6 +79,11 @@ def get_config():
         help="Number of environment steps to train the agent on.",
     )
     parser.add(
+        "--FRAME_STACK",
+        type=int,
+        help="The number of most recent frames experienced by the agent that are given as input to the Q network.",
+    )
+    parser.add(
         "--REPLAY_BUFFER_SIZE",
         type=int,
         help="The capacity of the experience replay buffer.",

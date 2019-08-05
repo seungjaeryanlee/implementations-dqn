@@ -61,7 +61,7 @@ import torch.optim as optim
 from dqn.agents import DQNAgent
 from dqn.networks import AtariQNetwork
 from dqn.replays import CircularReplayBuffer, Transition
-from environments import AtariPreprocessing, FrameStack4
+from environments import AtariPreprocessing, FrameStack
 from train_eval import get_config
 from utils import get_linear_anneal_func, get_logger, make_reproducible
 
@@ -96,8 +96,8 @@ def main():
     env = AtariPreprocessing(env, frame_skip=1, terminal_on_life_loss=True)
     eval_env = AtariPreprocessing(eval_env, frame_skip=1, terminal_on_life_loss=True)
     # Stack four frames
-    env = FrameStack4(env)
-    eval_env = FrameStack4(eval_env)
+    env = FrameStack(env, stack_size=4)
+    eval_env = FrameStack(eval_env, stack_size=4)
     # TODO(seungjaeryanlee): Does "action repeat" and "update frequency" parameter
     #                         in paper mean separate things? Should I wait for
     #                         16 actions before each update?

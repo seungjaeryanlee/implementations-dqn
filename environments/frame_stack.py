@@ -9,20 +9,20 @@ import gym
 import numpy as np
 
 
-class FrameStack4(gym.Wrapper):
-    """Stack previous four frames (must be applied to Gym env, not our envs)."""
+class FrameStack(gym.Wrapper):
+    """Stack previous N frames (must be applied to Gym env, not our envs)."""
 
-    STACK_SIZE = 4
-
-    def __init__(self, env):
-        super(FrameStack4, self).__init__(env)
+    def __init__(self, env, stack_size=4):
+        super(FrameStack, self).__init__(env)
         self._env = env
-        self._frames = collections.deque(maxlen=FrameStack4.STACK_SIZE)
+        self._frames = collections.deque(maxlen=stack_size)
         space = self._env.observation_space
-        shape = (FrameStack4.STACK_SIZE,) + space.shape[0:2]
+        shape = (stack_size,) + space.shape[0:2]
         self.observation_space = gym.spaces.Box(
             low=0, high=255, shape=shape, dtype=space.dtype
         )
+
+        self.stack_size = stack_size
 
     def __getattr__(self, name):
         """Forward all other calls to the base environment."""
@@ -33,7 +33,7 @@ class FrameStack4(gym.Wrapper):
 
     def reset(self):
         observation = self._env.reset()
-        for _ in range(FrameStack4.STACK_SIZE):
+        for _ in range(self.stack_size):
             self._frames.append(observation)
         return self._generate_observation()
 
