@@ -85,16 +85,20 @@ def main():
 
     # Setup environment
     # v4 variant: No repeat action
-    env = gym.make(CONFIG.ENV_NAME, frameskip=CONFIG.FRAME_SKIP)
-    eval_env = gym.make(CONFIG.ENV_NAME, frameskip=CONFIG.FRAME_SKIP)
+    env = gym.make(CONFIG.ENV_NAME)
+    eval_env = gym.make(CONFIG.ENV_NAME)
     # AtariPreprocessing:
     # - Max NOOP on start: 30
-    # - Frameskip: 1
+    # - Frameskip: CONFIG.FRAME_SKIP
     # - Screen size: 84
     # - Terminal on life loss: True
     # - Grayscale obs: True
-    env = AtariPreprocessing(env, frame_skip=1, terminal_on_life_loss=True)
-    eval_env = AtariPreprocessing(eval_env, frame_skip=1, terminal_on_life_loss=True)
+    env = AtariPreprocessing(
+        env, frame_skip=CONFIG.FRAME_SKIP, terminal_on_life_loss=True
+    )
+    eval_env = AtariPreprocessing(
+        eval_env, frame_skip=CONFIG.FRAME_SKIP, terminal_on_life_loss=True
+    )
     # Stack four frames
     env = FrameStack(env, stack_size=4)
     eval_env = FrameStack(eval_env, stack_size=4)
