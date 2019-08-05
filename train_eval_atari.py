@@ -99,9 +99,9 @@ def main():
     eval_env = AtariPreprocessing(
         eval_env, frame_skip=CONFIG.FRAME_SKIP, terminal_on_life_loss=True
     )
-    # Stack four frames
-    env = FrameStack(env, stack_size=4)
-    eval_env = FrameStack(eval_env, stack_size=4)
+    # Stack frames to create observation
+    env = FrameStack(env, stack_size=CONFIG.FRAME_STACK)
+    eval_env = FrameStack(eval_env, stack_size=CONFIG.FRAME_STACK)
     # TODO(seungjaeryanlee): Preprocessing: average of two frames
 
     # Fix random seeds
