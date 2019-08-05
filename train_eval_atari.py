@@ -90,6 +90,7 @@ def main():
     # AtariPreprocessing:
     # - Max NOOP on start: 30
     # - Frameskip: CONFIG.FRAME_SKIP
+    #   - If Frameskip > 1, max pooling is done
     # - Screen size: 84
     # - Terminal on life loss: True
     # - Grayscale obs: True
@@ -102,7 +103,6 @@ def main():
     # Stack frames to create observation
     env = FrameStack(env, stack_size=CONFIG.FRAME_STACK)
     eval_env = FrameStack(eval_env, stack_size=CONFIG.FRAME_STACK)
-    # TODO(seungjaeryanlee): Preprocessing: average of two frames
 
     # Fix random seeds
     if CONFIG.RANDOM_SEED is not None:
@@ -124,15 +124,14 @@ def main():
     replay_buffer = CircularReplayBuffer(
         env, maxlen=CONFIG.REPLAY_BUFFER_SIZE, device=device
     )
-    # TODO(seungjaeryanlee): Check parameters
     optimizer = optim.RMSprop(
         q_net.parameters(),
-        lr=0.00025,
-        alpha=0.95,
-        eps=0.01,
-        weight_decay=0,
-        momentum=0,
-        centered=True,
+        lr=CONFIG.RMSPROP_LR,
+        alpha=CONFIG.RMSPROP_DECAY,
+        eps=CONFIG.RMSPROP_EPSILON,
+        momentum=CONFIG.RMSPROP_MOMENTUM,
+        weight_decay=CONFIG.RMSPROP_WEIGHT_DECAY,
+        centered=CONFIG.RMSPROP_IS_CENTERED,
     )
     get_epsilon = get_linear_anneal_func(
         CONFIG.EPSILON_START, CONFIG.EPSILON_END, CONFIG.EPSILON_DURATION
@@ -210,7 +209,7 @@ def main():
 
             eval_episode_i += 1
 
-        if step_i % CONFIG.TARGET_NET_UPDATE_RATE == 0:
+        if step_i % CONFIG.TARGET_NET_UPDATE_FREQUENCY == 0:
             dqn_agent.update_target_q_net()
 
         episode_return += rew

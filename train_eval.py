@@ -129,9 +129,24 @@ def get_config():
         help="Random seed to set to guarantee reproducibility.",
     )
     parser.add(
-        "--TARGET_NET_UPDATE_RATE",
+        "--TARGET_NET_UPDATE_FREQUENCY",
         type=int,
         help="How many steps to wait for each target network update.",
+    )
+
+    parser.add("--RMSPROP_LR", type=float, help="The learning rate for RMSprop.")
+    parser.add("--RMSPROP_DECAY", type=float, help="Smoothing constant for RMSprop.")
+    parser.add(
+        "--RMSPROP_EPSILON",
+        type=float,
+        help="Term added to the denominator for numerical stability.",
+    )
+    parser.add("--RMSPROP_MOMENTUM", type=float, help="Momentum factor for RMSprop.")
+    parser.add("--RMSPROP_WEIGHT_DECAY", type=float, help="RMSprop L2 penalty.")
+    parser.add(
+        "--RMSPROP_IS_CENTERED",
+        action="store_true",
+        help="If True, compute the centered RMSprop.",
     )
     parser.add(
         "--UPDATE_FREQUENCY",
@@ -164,6 +179,8 @@ def get_config():
         help="Use Weights & Biases for online logging.",
     )
     CONFIG = parser.parse_args()
+    if not hasattr(CONFIG, "RMSPROP_IS_CENTERED"):
+        CONFIG.RMSPROP_IS_CENTERED = False
     if not hasattr(CONFIG, "USE_TENSORBOARD"):
         CONFIG.USE_TENSORBOARD = False
     if not hasattr(CONFIG, "USE_WANDB"):
@@ -299,8 +316,7 @@ def main():
             eval_episode_i += 1
 
         # Update target network periodically
-        # TODO(seungjaeryanlee): RATE -> FREQUENCY
-        if step_i % CONFIG.TARGET_NET_UPDATE_RATE == 0:
+        if step_i % CONFIG.TARGET_NET_UPDATE_FREQUENCY == 0:
             dqn_agent.update_target_q_net()
 
         episode_return += rew
