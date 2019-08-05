@@ -98,9 +98,6 @@ def main():
     # Stack four frames
     env = FrameStack(env, stack_size=4)
     eval_env = FrameStack(eval_env, stack_size=4)
-    # TODO(seungjaeryanlee): Does "action repeat" and "update frequency" parameter
-    #                         in paper mean separate things? Should I wait for
-    #                         16 actions before each update?
     # TODO(seungjaeryanlee): Preprocessing: average of two frames
 
     # Fix random seeds
@@ -119,8 +116,7 @@ def main():
         logger.warning("GPU not available: this run could be slow.")
 
     # Setup agent
-    # TODO(seungjaeryanlee): Number of Frames stacked as parameter
-    q_net = AtariQNetwork(4, env.action_space.n).to(device)
+    q_net = AtariQNetwork(CONFIG.FRAME_STACK, env.action_space.n).to(device)
     replay_buffer = CircularReplayBuffer(
         env, maxlen=CONFIG.REPLAY_BUFFER_SIZE, device=device
     )
@@ -159,7 +155,6 @@ def main():
         replay_buffer.append(Transition(obs, action, rew, next_obs, done))
 
         # Train QNetwork
-        # TODO(seungjaeryanlee): Only update after every four actions
         if (
             step_i % CONFIG.UPDATE_FREQUENCY == 0
             and len(replay_buffer) >= CONFIG.MIN_REPLAY_BUFFER_SIZE
