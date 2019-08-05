@@ -116,7 +116,7 @@ def main():
     # Choose CPU or GPU
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     if not torch.cuda.is_available():
-        logger.warning("GPU not available: this run cound be slow.")
+        logger.warning("GPU not available: this run could be slow.")
 
     # Setup agent
     # TODO(seungjaeryanlee): Number of Frames stacked as parameter
