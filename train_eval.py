@@ -168,6 +168,11 @@ def get_config():
         ),
     )
     parser.add(
+        "--LOG_TO_FILE",
+        action="store_true",
+        help="If true, log everything to a run.log file.",
+    )
+    parser.add(
         "--EVAL_FREQUENCY",
         type=int,
         help="How frequently (in environment steps) the agent will be evaluated.",
@@ -187,6 +192,8 @@ def get_config():
     CONFIG = parser.parse_args()
     if not hasattr(CONFIG, "RMSPROP_IS_CENTERED"):
         CONFIG.RMSPROP_IS_CENTERED = False
+    if not hasattr(CONFIG, "LOG_TO_FILE"):
+        CONFIG.LOG_TO_FILE = False
     if not hasattr(CONFIG, "USE_TENSORBOARD"):
         CONFIG.USE_TENSORBOARD = False
     if not hasattr(CONFIG, "USE_WANDB"):
@@ -214,7 +221,7 @@ def main():
     CONFIG = get_config()
 
     # Log to File, Console, TensorBoard, W&B
-    logger = get_logger()
+    logger = get_logger(log_to_console=True, log_to_file=CONFIG.LOG_TO_FILE)
 
     if CONFIG.USE_TENSORBOARD:
         from torch.utils.tensorboard import SummaryWriter

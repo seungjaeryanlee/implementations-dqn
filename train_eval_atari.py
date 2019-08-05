@@ -72,7 +72,7 @@ def main():
     CONFIG = get_config()
 
     # Log to File, Console, TensorBoard, W&B
-    logger = get_logger()
+    logger = get_logger(log_to_console=True, log_to_file=CONFIG.LOG_TO_FILE)
 
     if CONFIG.USE_TENSORBOARD:
         from torch.utils.tensorboard import SummaryWriter
@@ -170,7 +170,6 @@ def main():
 
             # Log td_loss
             if step_i % CONFIG.LOG_FREQUENCY == 0:
-                # TODO(seungjaeryanlee): Add option of disabling file logger
                 logger.debug(
                     "Episode {:4d}  Steps {:5d}  Loss {:6.6f}".format(
                         episode_i, step_i, td_loss
