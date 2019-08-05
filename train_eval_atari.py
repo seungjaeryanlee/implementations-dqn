@@ -84,9 +84,9 @@ def main():
         wandb.init(project="implementations-dqn", config=CONFIG)
 
     # Setup environment
-    # Deterministic-v4 variant: 4(or 3*) frameskip, No repeat action
-    env = gym.make(CONFIG.ENV_NAME)
-    eval_env = gym.make(CONFIG.ENV_NAME)
+    # v4 variant: No repeat action
+    env = gym.make(CONFIG.ENV_NAME, frameskip=CONFIG.FRAME_SKIP)
+    eval_env = gym.make(CONFIG.ENV_NAME, frameskip=CONFIG.FRAME_SKIP)
     # AtariPreprocessing:
     # - Max NOOP on start: 30
     # - Frameskip: 1
