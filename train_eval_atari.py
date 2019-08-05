@@ -60,7 +60,7 @@ import torch.optim as optim
 
 from dqn.agents import DQNAgent
 from dqn.networks import AtariQNetwork
-from dqn.replays import CircularReplayBuffer, Transition
+from dqn.replays import NORMALIZE_OBSERVATION, CircularReplayBuffer, Transition
 from environments import AtariPreprocessing, FrameStack
 from train_eval import get_config
 from utils import get_linear_anneal_func, get_logger, make_reproducible
@@ -122,7 +122,10 @@ def main():
     # Setup agent
     q_net = AtariQNetwork(CONFIG.FRAME_STACK, env.action_space.n).to(device)
     replay_buffer = CircularReplayBuffer(
-        env, maxlen=CONFIG.REPLAY_BUFFER_SIZE, device=device
+        env,
+        maxlen=CONFIG.REPLAY_BUFFER_SIZE,
+        device=device,
+        preprocess_batch=NORMALIZE_OBSERVATION,
     )
     optimizer = optim.RMSprop(
         q_net.parameters(),

@@ -81,12 +81,18 @@ def get_config():
     parser.add(
         "--FRAME_STACK",
         type=int,
-        help="The number of most recent frames experienced by the agent that are given as input to the Q network.",
+        help=(
+            "The number of most recent frames experienced by the agent"
+            "that are given as input to the Q network."
+        ),
     )
     parser.add(
         "--FRAME_SKIP",
         type=int,
-        help="Repeat each action selected by the agent this many times Using a value of 4 results in the agent seeing only every 4th input frame.",
+        help=(
+            "Repeat each action selected by the agent this many times. ",
+            "Using a value of 4 results in the agent seeing only every 4th input frame.",
+        ),
     )
     parser.add(
         "--REPLAY_BUFFER_SIZE",
