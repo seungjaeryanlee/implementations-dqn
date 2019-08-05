@@ -124,6 +124,11 @@ def get_config():
         help="How many steps to wait for each target network update.",
     )
     parser.add(
+        "--UPDATE_FREQUENCY",
+        type=int,
+        help="The number of actions selected by the agent between each successive SGD updates.",
+    )
+    parser.add(
         "--LOG_FREQUENCY",
         type=int,
         help=(

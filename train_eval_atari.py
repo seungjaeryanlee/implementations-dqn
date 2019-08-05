@@ -160,7 +160,10 @@ def main():
 
         # Train QNetwork
         # TODO(seungjaeryanlee): Only update after every four actions
-        if len(replay_buffer) >= CONFIG.MIN_REPLAY_BUFFER_SIZE:
+        if (
+            step_i % CONFIG.UPDATE_FREQUENCY == 0
+            and len(replay_buffer) >= CONFIG.MIN_REPLAY_BUFFER_SIZE
+        ):
             experiences = replay_buffer.get_torch_batch(CONFIG.BATCH_SIZE)
             td_loss = dqn_agent.train(experiences, discount=CONFIG.DISCOUNT)
 
