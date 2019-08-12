@@ -127,7 +127,15 @@ def main():
         device=device,
         preprocess_batch=NORMALIZE_OBSERVATION,
     )
-    optimizer = optim.Adam(q_net.parameters(), lr=CONFIG.ADAM_LR, eps=CONFIG.ADAM_EPS)
+    optimizer = optim.RMSprop(
+        q_net.parameters(),
+        lr=CONFIG.RMSPROP_LR,
+        alpha=CONFIG.RMSPROP_DECAY,
+        eps=CONFIG.RMSPROP_EPSILON,
+        momentum=CONFIG.RMSPROP_MOMENTUM,
+        weight_decay=CONFIG.RMSPROP_WEIGHT_DECAY,
+        centered=CONFIG.RMSPROP_IS_CENTERED,
+    )
     get_epsilon = get_linear_anneal_func(
         CONFIG.EPSILON_START, CONFIG.EPSILON_END, CONFIG.EPSILON_DURATION
     )
