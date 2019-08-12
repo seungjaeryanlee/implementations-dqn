@@ -168,17 +168,18 @@ def main():
             experiences = replay_buffer.get_torch_batch(CONFIG.BATCH_SIZE)
             td_loss = dqn_agent.train(experiences, discount=CONFIG.DISCOUNT)
 
-            # Log td_loss
+            # Log td_loss and epsilon
             if step_i % CONFIG.LOG_FREQUENCY == 0:
                 logger.debug(
-                    "Episode {:4d}  Steps {:5d}  Loss {:6.6f}".format(
-                        episode_i, step_i, td_loss
+                    "Episode {:4d}  Steps {:5d}  Epsilon {:6.6f}  Loss {:6.6f}".format(
+                        episode_i, step_i, epsilon, td_loss
                     )
                 )
                 if CONFIG.USE_TENSORBOARD:
                     writer.add_scalar("td_loss", td_loss, step_i)
+                    writer.add_scalar("epsilon", epsilon, step_i)
                 if CONFIG.USE_WANDB:
-                    wandb.log({"TD Loss": td_loss}, step=step_i)
+                    wandb.log({"TD Loss": td_loss, "Epsilon": epsilon}, step=step_i)
 
         # Evaluate agent periodically
         if step_i % CONFIG.EVAL_FREQUENCY == 0:
