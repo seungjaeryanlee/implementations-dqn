@@ -140,19 +140,11 @@ def get_config():
         help="How many steps to wait for each target network update.",
     )
 
-    parser.add("--RMSPROP_LR", type=float, help="The learning rate for RMSprop.")
-    parser.add("--RMSPROP_DECAY", type=float, help="Smoothing constant for RMSprop.")
+    parser.add("--ADAM_LR", type=float, help="The learning rate for Adam.")
     parser.add(
-        "--RMSPROP_EPSILON",
+        "--ADAM_EPS",
         type=float,
         help="Term added to the denominator for numerical stability.",
-    )
-    parser.add("--RMSPROP_MOMENTUM", type=float, help="Momentum factor for RMSprop.")
-    parser.add("--RMSPROP_WEIGHT_DECAY", type=float, help="RMSprop L2 penalty.")
-    parser.add(
-        "--RMSPROP_IS_CENTERED",
-        action="store_true",
-        help="If True, compute the centered RMSprop.",
     )
     parser.add(
         "--UPDATE_FREQUENCY",
@@ -190,8 +182,6 @@ def get_config():
         help="Use Weights & Biases for online logging.",
     )
     CONFIG = parser.parse_args()
-    if not hasattr(CONFIG, "RMSPROP_IS_CENTERED"):
-        CONFIG.RMSPROP_IS_CENTERED = False
     if not hasattr(CONFIG, "LOG_TO_FILE"):
         CONFIG.LOG_TO_FILE = False
     if not hasattr(CONFIG, "USE_TENSORBOARD"):
@@ -256,7 +246,7 @@ def main():
     replay_buffer = CircularReplayBuffer(
         env, maxlen=CONFIG.REPLAY_BUFFER_SIZE, device=device
     )
-    optimizer = optim.Adam(q_net.parameters())
+    optimizer = optim.Adam(q_net.parameters(), lr=CONFIG.ADAM_LR, eps=CONFIG.ADAM_EPS)
     get_epsilon = get_linear_anneal_func(
         CONFIG.EPSILON_START, CONFIG.EPSILON_END, CONFIG.EPSILON_DURATION
     )
