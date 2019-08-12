@@ -173,6 +173,32 @@ def main():
                 if CONFIG.USE_WANDB:
                     wandb.log({"TD Loss": td_loss, "Epsilon": epsilon}, step=step_i)
 
+        # Update target QNetwork
+        if step_i % CONFIG.TARGET_NET_UPDATE_FREQUENCY == 0:
+            dqn_agent.update_target_q_net()
+
+        # Prepare for next step
+        episode_return += rew
+        obs = next_obs
+
+        # Prepare for next episode if episode is finished
+        if done:
+            logger.info(
+                "Episode {:4d}  Steps {:5d}  Return {:4d}".format(
+                    episode_i, step_i, int(episode_return)
+                )
+            )
+            if CONFIG.USE_TENSORBOARD:
+                writer.add_scalar("episode_return", episode_return, episode_i)
+            if CONFIG.USE_WANDB:
+                wandb.log(
+                    {"Episode Return": episode_return, "Episode Count": episode_i},
+                    step=step_i,
+                )
+            env.reset()
+            episode_return = 0
+            episode_i += 1
+
         # Evaluate agent periodically
         if step_i % CONFIG.EVAL_FREQUENCY == 0:
             eval_done = False
@@ -203,32 +229,6 @@ def main():
                 )
 
             eval_episode_i += 1
-
-        if step_i % CONFIG.TARGET_NET_UPDATE_FREQUENCY == 0:
-            dqn_agent.update_target_q_net()
-
-        episode_return += rew
-
-        # If episode is finished
-        if done:
-            logger.info(
-                "Episode {:4d}  Steps {:5d}  Return {:4d}".format(
-                    episode_i, step_i, int(episode_return)
-                )
-            )
-            if CONFIG.USE_TENSORBOARD:
-                writer.add_scalar("episode_return", episode_return, episode_i)
-            if CONFIG.USE_WANDB:
-                wandb.log(
-                    {"Episode Return": episode_return, "Episode Count": episode_i},
-                    step=step_i,
-                )
-            env.reset()
-            episode_return = 0
-            episode_i += 1
-
-        # Prepare for next step
-        obs = next_obs
 
     # Save trained agent
     if CONFIG.SAVE_PATH:
