@@ -419,8 +419,15 @@ def main():
 
     # Setup agent and replay buffer
     q_net = QNetwork(env.observation_space.shape[0], env.action_space.n).to(device)
-    # TODO(seungjaeryanlee): Use RMSprop
-    optimizer = optim.Adam(q_net.parameters())
+    optimizer = optim.RMSprop(
+        q_net.parameters(),
+        lr=CONFIG.RMSPROP_LR,
+        alpha=CONFIG.RMSPROP_DECAY,
+        eps=CONFIG.RMSPROP_EPSILON,
+        momentum=CONFIG.RMSPROP_MOMENTUM,
+        weight_decay=CONFIG.RMSPROP_WEIGHT_DECAY,
+        centered=CONFIG.RMSPROP_IS_CENTERED,
+    )
     if CONFIG.LOAD_PATH:
         # Load parameters if possible
         load_models(CONFIG.LOAD_PATH, q_net=q_net, optimizer=optimizer)
