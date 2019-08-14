@@ -254,7 +254,9 @@ def main():
                 writer.add_scalar(
                     "eval/avg_episode_return", avg_eval_episode_return, eval_i
                 )
-                writer.add_histogram("eval/episode_returns", np.array(all_eval_episode_return))
+                writer.add_histogram(
+                    "eval/episode_returns", np.array(all_eval_episode_return)
+                )
             if CONFIG.USE_WANDB:
                 wandb.log(
                     {
