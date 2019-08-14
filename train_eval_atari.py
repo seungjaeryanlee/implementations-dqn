@@ -52,8 +52,6 @@ env : Environment
 obs : Observation
 rew : Reward
 """
-import os
-
 import gym
 import numpy as np
 import torch
@@ -68,7 +66,13 @@ from dqn.replays import (
 )
 from environments import AtariPreprocessing, FrameStack
 from train_eval import get_config
-from utils import get_linear_anneal_func, get_logger, make_reproducible
+from utils import (
+    get_linear_anneal_func,
+    get_logger,
+    load_models,
+    make_reproducible,
+    save_models,
+)
 
 
 def main():
@@ -148,9 +152,7 @@ def main():
 
     # Load trained agent
     if CONFIG.LOAD_PATH:
-        state_dict = torch.load(CONFIG.LOAD_PATH)
-        q_net.load_state_dict(state_dict["q_net"])
-        optimizer.load_state_dict(state_dict["optimizer"])
+        load_models(CONFIG.LOAD_PATH, q_net=q_net, optimizer=optimizer)
 
     if CONFIG.USE_WANDB:
         wandb.watch(q_net)
@@ -245,15 +247,7 @@ def main():
 
     # Save trained agent
     if CONFIG.SAVE_PATH:
-        # Create specified directory if it does not exist yet
-        SAVE_DIRECTORY = "/".join(CONFIG.SAVE_PATH.split("/")[:-1])
-        if not os.path.exists(SAVE_DIRECTORY):
-            os.makedirs(SAVE_DIRECTORY)
-
-        torch.save(
-            {"q_net": q_net.state_dict(), "optimizer": optimizer.state_dict()},
-            CONFIG.SAVE_PATH,
-        )
+        save_models(CONFIG.SAVE_PATH, q_net=q_net, optimizer=optimizer)
 
 
 if __name__ == "__main__":
