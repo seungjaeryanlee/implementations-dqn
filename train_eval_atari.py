@@ -168,7 +168,7 @@ def main():
 
     episode_return = 0
     episode_i = 0
-    eval_episode_i = 0
+    eval_i = 0
     for step_i in range(CONFIG.ENV_STEPS + 1):
         # Interact with the environment and save the experience
         epsilon = get_epsilon(step_i)
@@ -225,32 +225,38 @@ def main():
 
         # Evaluate agent periodically
         if step_i % CONFIG.EVAL_FREQUENCY == 0:
-            # Run evaluation
-            eval_done = False
-            eval_obs = eval_env.reset()
-            eval_episode_return = 0
-            while not eval_done:
-                eval_action = dqn_agent.select_action(
-                    np.expand_dims(eval_obs, 0), epsilon=0
-                )
-                eval_obs, eval_rew, eval_done, info = eval_env.step(eval_action)
-                eval_episode_return += eval_rew
+            total_eval_episode_return = 0
+
+            # Run multiple evaluation episodes
+            for _ in range(CONFIG.EVAL_EPISODES):
+                # Run evaluation
+                eval_done = False
+                eval_obs = eval_env.reset()
+                eval_episode_return = 0
+                while not eval_done:
+                    eval_action = dqn_agent.select_action(
+                        np.expand_dims(eval_obs, 0), epsilon=0
+                    )
+                    eval_obs, eval_rew, eval_done, info = eval_env.step(eval_action)
+                    eval_episode_return += eval_rew
+                total_eval_episode_return += eval_episode_return
+            avg_eval_episode_return = total_eval_episode_return / CONFIG.EVAL_EPISODES
 
             # Log results
             logger.info(
-                "EVALUATION    Steps {:5d}  Return {:4d}".format(
-                    step_i, int(eval_episode_return)
+                "EVALUATION    Steps {:5d}  Return {:7.2f}".format(
+                    step_i, avg_eval_episode_return
                 )
             )
             if CONFIG.USE_TENSORBOARD:
                 writer.add_scalar(
-                    "eval/episode_return", eval_episode_return, eval_episode_i
+                    "eval/avg_episode_return", avg_eval_episode_return, eval_i
                 )
             if CONFIG.USE_WANDB:
                 wandb.log(
                     {
-                        "Evaluation Episode Return": eval_episode_return,
-                        "Evaluation Episode Count": eval_episode_i,
+                        "Average Evaluation Episode Return": avg_eval_episode_return,
+                        "Evaluation Episode Count": eval_i,
                     },
                     step=step_i,
                 )
@@ -266,7 +272,7 @@ def main():
                 )
                 logger.info(f"Model succesfully saved at {unique_save_dir}")
 
-            eval_episode_i += 1
+            eval_i += 1
 
     # Save trained agent
     if CONFIG.SAVE_DIR:
