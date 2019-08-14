@@ -226,14 +226,9 @@ def get_config():
     return CONFIG
 
 
-def main():
-    """Run only when this file is called directly."""
-    # Setup hyperparameters
-    CONFIG = get_config()
-
-    # Log to File, Console, TensorBoard, W&B
-    logger = get_logger(log_to_console=True, log_to_file=CONFIG.LOG_TO_FILE)
-
+def train_eval(dqn_agent, replay_buffer, env, eval_env, device, logger, CONFIG):
+    """Train and evaluate agent on given environments according to given configuration."""
+    # Log to TensorBoard and W&B
     if CONFIG.USE_TENSORBOARD:
         from torch.utils.tensorboard import SummaryWriter
 
@@ -242,10 +237,7 @@ def main():
         import wandb
 
         wandb.init(project="implementations-dqn", config=CONFIG)
-
-    # Setup environment
-    env = gym.make(CONFIG.ENV_NAME)
-    eval_env = gym.make(CONFIG.ENV_NAME)
+        wandb.watch(dqn_agent.q_net)
 
     # Fix random seeds
     if CONFIG.RANDOM_SEED is not None:
@@ -257,25 +249,6 @@ def main():
 
     obs = env.reset()
 
-    # Choose CPU or GPU
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    if not torch.cuda.is_available():
-        logger.warning("GPU not available: this run could be slow.")
-
-    # Setup agent
-    q_net = QNetwork(env.observation_space.shape[0], env.action_space.n).to(device)
-    replay_buffer = CircularReplayBuffer(
-        env, maxlen=CONFIG.REPLAY_BUFFER_SIZE, device=device
-    )
-    optimizer = optim.Adam(q_net.parameters())
-    get_epsilon = get_linear_anneal_func(
-        CONFIG.EPSILON_START, CONFIG.EPSILON_END, CONFIG.EPSILON_DURATION
-    )
-    dqn_agent = DQNAgent(env, q_net, optimizer, device)
-
-    # Load trained agent
-    if CONFIG.LOAD_PATH:
-        load_models(CONFIG.LOAD_PATH, q_net=q_net, optimizer=optimizer)
     # Check if SAVE_DIR is defined
     if not CONFIG.SAVE_DIR:
         logger.warning("No save directory specified: the model will be lost!")
@@ -285,9 +258,12 @@ def main():
         # Unique save directory to prevent rewrite
         unique_save_dir = f"{CONFIG.SAVE_DIR}/{CONFIG.ENV_NAME}/{get_timestamp()}/"
 
-    if CONFIG.USE_WANDB:
-        wandb.watch(q_net)
+    # Setup epsilon decay function
+    get_epsilon = get_linear_anneal_func(
+        CONFIG.EPSILON_START, CONFIG.EPSILON_END, CONFIG.EPSILON_DURATION
+    )
 
+    # Main training loop
     episode_return = 0
     episode_i = 0
     eval_i = 0
@@ -404,7 +380,10 @@ def main():
             ):
                 saved_model_eval_episode_return = eval_episode_return
                 save_models(
-                    unique_save_dir, filename="best", q_net=q_net, optimizer=optimizer
+                    unique_save_dir,
+                    filename="best",
+                    q_net=dqn_agent.q_net,
+                    optimizer=dqn_agent.optimizer,
                 )
                 logger.info(f"Model succesfully saved at {unique_save_dir}")
 
@@ -412,8 +391,47 @@ def main():
 
     # Save trained agent
     if CONFIG.SAVE_DIR:
-        save_models(unique_save_dir, filename="last", q_net=q_net, optimizer=optimizer)
+        save_models(
+            unique_save_dir,
+            filename="last",
+            q_net=dqn_agent.q_net,
+            optimizer=dqn_agent.optimizer,
+        )
         logger.info(f"Model successfully saved at {unique_save_dir}")
+
+
+def main():
+    """Run only when this file is called directly."""
+    # Setup hyperparameters
+    CONFIG = get_config()
+
+    # Log to File and Console
+    logger = get_logger(log_to_console=True, log_to_file=CONFIG.LOG_TO_FILE)
+
+    # Choose CPU or GPU
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    if not torch.cuda.is_available():
+        logger.warning("GPU not available: this run could be slow.")
+
+    # Setup environment
+    env = gym.make(CONFIG.ENV_NAME)
+    eval_env = gym.make(CONFIG.ENV_NAME)
+
+    # Setup agent and replay buffer
+    q_net = QNetwork(env.observation_space.shape[0], env.action_space.n).to(device)
+    # TODO(seungjaeryanlee): Use RMSprop
+    optimizer = optim.Adam(q_net.parameters())
+    if CONFIG.LOAD_PATH:
+        # Load parameters if possible
+        load_models(CONFIG.LOAD_PATH, q_net=q_net, optimizer=optimizer)
+    dqn_agent = DQNAgent(env, q_net, optimizer, device)
+
+    replay_buffer = CircularReplayBuffer(
+        env, maxlen=CONFIG.REPLAY_BUFFER_SIZE, device=device
+    )
+
+    # Train and evaluate agent
+    train_eval(dqn_agent, replay_buffer, env, eval_env, device, logger, CONFIG)
 
 
 if __name__ == "__main__":

@@ -35,8 +35,8 @@ class DQNAgent:
 
         """
         self._env = env
-        self._q_net = q_net
-        self._optimizer = optimizer
+        self.q_net = q_net
+        self.optimizer = optimizer
 
         self._target_q_net = copy.deepcopy(q_net)
 
@@ -65,7 +65,7 @@ class DQNAgent:
             return self._env.action_space.sample()
 
         # Greedy action
-        q_values = self._q_net(torch.FloatTensor(obs).to(self._device))
+        q_values = self.q_net(torch.FloatTensor(obs).to(self._device))
         return q_values.argmax().item()
 
     def train(
@@ -96,19 +96,19 @@ class DQNAgent:
         target = rew_b + (1 - done_b) * discount * self._target_q_net(next_obs_b).max(
             dim=-1
         )[0].unsqueeze(1)
-        prediction = self._q_net(obs_b).gather(1, action_b)
+        prediction = self.q_net(obs_b).gather(1, action_b)
         assert target.shape == (len(obs_b), 1)
         assert prediction.shape == (len(obs_b), 1)
 
         td_loss = F.smooth_l1_loss(prediction, target)
         assert td_loss.shape == ()
 
-        self._optimizer.zero_grad()
+        self.optimizer.zero_grad()
         td_loss.backward()
-        self._optimizer.step()
+        self.optimizer.step()
 
         return td_loss.item()
 
     def update_target_q_net(self):
         """Update target Q-network."""
-        self._target_q_net = copy.deepcopy(self._q_net)
+        self._target_q_net = copy.deepcopy(self.q_net)
