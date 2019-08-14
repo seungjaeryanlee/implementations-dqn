@@ -11,9 +11,25 @@ import torch
 Transition = namedtuple("Transition", ["obs", "action", "rew", "next_obs", "done"])
 
 
+def NATUREDQN_ATARI_PREPROCESS_BATCH(o, a, r, n, d):
+    """Preprocessing according to Nature DQN paper."""
+    o, a, r, n, d = NORMALIZE_OBSERVATION(o, a, r, n, d)
+    o, a, r, n, d = CLIP_REWARD(o, a, r, n, d)
+
+    return o, a, r, n, d
+
+
 def NORMALIZE_OBSERVATION(obs_b, action_b, rew_b, next_obs_b, done_b):
     """Normalize observation for Atari environments."""
     return obs_b / 255, action_b, rew_b, next_obs_b / 255, done_b
+
+
+# NOTE(seungjaeryanlee): We use preprocessing in replay buffer instead of
+#                        environment wrapper to allow for correct training
+#                        environment episodic return.
+def CLIP_REWARD(obs_b, action_b, rew_b, next_obs_b, done_b):
+    """Clip rewards to be between [-1, 1]."""
+    return obs_b, action_b, np.clip(rew_b, -1, 1), next_obs_b, done_b
 
 
 class ReplayBuffer:

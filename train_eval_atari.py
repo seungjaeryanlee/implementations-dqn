@@ -60,8 +60,12 @@ import torch.optim as optim
 
 from dqn.agents import DQNAgent
 from dqn.networks import AtariQNetwork
-from dqn.replays import NORMALIZE_OBSERVATION, CircularReplayBuffer, Transition
-from environments import AtariPreprocessing, ClipReward, FrameStack
+from dqn.replays import (
+    NATUREDQN_ATARI_PREPROCESS_BATCH,
+    CircularReplayBuffer,
+    Transition,
+)
+from environments import AtariPreprocessing, FrameStack
 from train_eval import get_config
 from utils import get_linear_anneal_func, get_logger, make_reproducible
 
@@ -103,8 +107,6 @@ def main():
     # Stack frames to create observation
     env = FrameStack(env, stack_size=CONFIG.FRAME_STACK)
     eval_env = FrameStack(eval_env, stack_size=CONFIG.FRAME_STACK)
-    # Reward clipping for ONLY training env
-    env = ClipReward(env, -1, 1)
 
     # Fix random seeds
     if CONFIG.RANDOM_SEED is not None:
@@ -127,7 +129,7 @@ def main():
         env,
         maxlen=CONFIG.REPLAY_BUFFER_SIZE,
         device=device,
-        preprocess_batch=NORMALIZE_OBSERVATION,
+        preprocess_batch=NATUREDQN_ATARI_PREPROCESS_BATCH,
     )
     optimizer = optim.RMSprop(
         q_net.parameters(),
