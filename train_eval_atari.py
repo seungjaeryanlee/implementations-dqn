@@ -17,7 +17,8 @@ For a reproducible run, use the RANDOM_SEED flag.
 python train_eval_atari.py -c space_invaders.conf --RANDOM_SEED=1
 ```
 
-To save a trained agent, use the SAVE_PATH flag.
+With default config, the model is saved to `saves/space_invaders.pth`.
+To save in a different location, use the SAVE_PATH flag.
 ```
 python train_eval_atari.py -c space_invaders.conf --SAVE_PATH=saves/space_invaders.pth
 ```
