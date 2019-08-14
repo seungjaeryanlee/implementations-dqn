@@ -188,6 +188,9 @@ def get_config():
         type=int,
         help="How many episodes the agent will be evaluated on.",
     )
+    parser.add(
+        "--EVAL_EPSILON", type=float, help="Epsilon value while running evaluation."
+    )
     parser.add("--SAVE_DIR", type=str, help="Save model to given directory.")
     parser.add("--LOAD_PATH", type=str, help="Load model from given file.")
     parser.add(
@@ -339,7 +342,7 @@ def train_eval(dqn_agent, replay_buffer, env, eval_env, device, logger, CONFIG):
                 eval_episode_return = 0
                 while not eval_done:
                     eval_action = dqn_agent.select_action(
-                        np.expand_dims(eval_obs, 0), epsilon=0
+                        np.expand_dims(eval_obs, 0), epsilon=CONFIG.EVAL_EPSILON
                     )
                     eval_obs, eval_rew, eval_done, info = eval_env.step(eval_action)
                     eval_episode_return += eval_rew
