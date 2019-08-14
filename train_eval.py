@@ -366,6 +366,7 @@ def main():
     # Save trained agent
     if CONFIG.SAVE_PATH:
         save_models(CONFIG.SAVE_PATH, q_net=q_net, optimizer=optimizer)
+        logger.info(f"Model succesfully saved at {CONFIG.SAVE_PATH}")
 
 
 if __name__ == "__main__":
