@@ -62,6 +62,7 @@ from dqn.replays import CircularReplayBuffer, Transition
 from utils import (
     get_linear_anneal_func,
     get_logger,
+    get_timestamp,
     load_models,
     make_reproducible,
     save_models,
@@ -272,6 +273,11 @@ def main():
     # Check if SAVE_DIR is defined
     if not CONFIG.SAVE_DIR:
         logger.warning("No save directory specified: the model will be lost!")
+    else:
+        # Episodic return of saved best model
+        saved_model_eval_episode_return = -float("inf")
+        # Unique save directory to prevent rewrite
+        unique_save_dir = f"{CONFIG.ENV_NAME}/{CONFIG.SAVE_DIR}/{get_timestamp()}/"
 
     if CONFIG.USE_WANDB:
         wandb.watch(q_net)
@@ -335,6 +341,7 @@ def main():
 
         # Evaluate agent periodically
         if step_i % CONFIG.EVAL_FREQUENCY == 0:
+            # Run evaluation
             eval_done = False
             eval_obs = eval_env.reset()
             eval_episode_return = 0
@@ -343,6 +350,7 @@ def main():
                 eval_obs, eval_rew, eval_done, info = eval_env.step(eval_action)
                 eval_episode_return += eval_rew
 
+            # Log results
             logger.info(
                 "EVALUATION    Steps {:5d}  Return {:4d}".format(
                     step_i, int(eval_episode_return)
@@ -361,14 +369,23 @@ def main():
                     step=step_i,
                 )
 
+            # Update save file if necessary
+            if (
+                CONFIG.SAVE_DIR
+                and saved_model_eval_episode_return <= eval_episode_return
+            ):
+                saved_model_eval_episode_return = eval_episode_return
+                save_models(
+                    unique_save_dir, filename="best", q_net=q_net, optimizer=optimizer
+                )
+                logger.info(f"Model succesfully saved at {unique_save_dir}")
+
             eval_episode_i += 1
 
     # Save trained agent
     if CONFIG.SAVE_DIR:
-        unique_save_dir = save_models(
-            CONFIG.SAVE_DIR, suffix="last", q_net=q_net, optimizer=optimizer
-        )
-        logger.info(f"Model succesfully saved at {unique_save_dir}")
+        save_models(unique_save_dir, filename="last", q_net=q_net, optimizer=optimizer)
+        logger.info(f"Model successfully saved at {unique_save_dir}")
 
 
 if __name__ == "__main__":
