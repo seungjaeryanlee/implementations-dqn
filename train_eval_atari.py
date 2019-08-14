@@ -195,7 +195,7 @@ def main():
                     writer.add_scalar("td_loss", td_loss, step_i)
                     writer.add_scalar("epsilon", epsilon, step_i)
                 if CONFIG.USE_WANDB:
-                    wandb.log({"TD Loss": td_loss, "Epsilon": epsilon}, step=step_i)
+                    wandb.log({"td_loss": td_loss, "epsilon": epsilon}, step=step_i)
 
         # Update target QNetwork
         if step_i % CONFIG.TARGET_NET_UPDATE_FREQUENCY == 0:
@@ -213,10 +213,13 @@ def main():
                 )
             )
             if CONFIG.USE_TENSORBOARD:
-                writer.add_scalar("episode_return", episode_return, episode_i)
+                writer.add_scalar("train/episode_return", episode_return, episode_i)
             if CONFIG.USE_WANDB:
                 wandb.log(
-                    {"Episode Return": episode_return, "Episode Count": episode_i},
+                    {
+                        "train/episode_return": episode_return,
+                        "train/episode_count": episode_i,
+                    },
                     step=step_i,
                 )
             env.reset()
@@ -260,11 +263,11 @@ def main():
             if CONFIG.USE_WANDB:
                 wandb.log(
                     {
-                        "Average Evaluation Episode Return": avg_eval_episode_return,
-                        "Evaluation Episode Returns": wandb.Histogram(
+                        "eval/avg_episode_return": avg_eval_episode_return,
+                        "eval/episode_returns": wandb.Histogram(
                             all_eval_episode_return
                         ),
-                        "Evaluation Episode Count": eval_i,
+                        "eval/episode_count": eval_i,
                     },
                     step=step_i,
                 )
