@@ -156,7 +156,7 @@ def main():
         load_models(CONFIG.LOAD_PATH, q_net=q_net, optimizer=optimizer)
     # Check if SAVE_DIR is defined
     if not CONFIG.SAVE_DIR:
-        logger.warning("No save path specified: the model will be lost!")
+        logger.warning("No save directory specified: the model will be lost!")
     else:
         # Episodic return of saved best model
         saved_model_eval_episode_return = -float("inf")
@@ -197,7 +197,7 @@ def main():
                 if CONFIG.USE_WANDB:
                     wandb.log({"td_loss": td_loss, "epsilon": epsilon}, step=step_i)
 
-        # Update target QNetwork
+        # Update target network periodically
         if step_i % CONFIG.TARGET_NET_UPDATE_FREQUENCY == 0:
             dqn_agent.update_target_q_net()
 
@@ -207,6 +207,7 @@ def main():
 
         # Prepare for next episode if episode is finished
         if done:
+            # Log episode metrics
             logger.info(
                 "Episode {:4d}  Steps {:5d}  Return {:4d}".format(
                     episode_i, step_i, int(episode_return)
@@ -222,6 +223,8 @@ def main():
                     },
                     step=step_i,
                 )
+
+            # Prepare for new episode
             env.reset()
             episode_return = 0
             episode_i += 1

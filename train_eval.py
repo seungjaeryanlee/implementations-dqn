@@ -283,7 +283,7 @@ def main():
         # Episodic return of saved best model
         saved_model_eval_episode_return = -float("inf")
         # Unique save directory to prevent rewrite
-        unique_save_dir = f"{CONFIG.ENV_NAME}/{CONFIG.SAVE_DIR}/{get_timestamp()}/"
+        unique_save_dir = f"{CONFIG.SAVE_DIR}/{CONFIG.ENV_NAME}/{get_timestamp()}/"
 
     if CONFIG.USE_WANDB:
         wandb.watch(q_net)
@@ -294,12 +294,15 @@ def main():
     for step_i in range(CONFIG.ENV_STEPS + 1):
         # Interact with the environment and save the experience
         epsilon = get_epsilon(step_i)
-        action = dqn_agent.select_action(obs, epsilon)
+        action = dqn_agent.select_action(np.expand_dims(obs, 0), epsilon)
         next_obs, rew, done, info = env.step(action)
         replay_buffer.append(Transition(obs, action, rew, next_obs, done))
 
         # Train QNetwork
-        if len(replay_buffer) >= CONFIG.MIN_REPLAY_BUFFER_SIZE:
+        if (
+            step_i % CONFIG.UPDATE_FREQUENCY == 0
+            and len(replay_buffer) >= CONFIG.MIN_REPLAY_BUFFER_SIZE
+        ):
             experiences = replay_buffer.get_torch_batch(CONFIG.BATCH_SIZE)
             td_loss = dqn_agent.train(experiences, discount=CONFIG.DISCOUNT)
 
@@ -321,8 +324,8 @@ def main():
             dqn_agent.update_target_q_net()
 
         # Prepare for next step
-        obs = next_obs
         episode_return += rew
+        obs = next_obs
 
         # Prepare for next episode if episode is finished
         if done:
@@ -354,11 +357,14 @@ def main():
 
             # Run multiple evaluation episodes
             for _ in range(CONFIG.EVAL_EPISODES):
+                # Run evaluation
                 eval_done = False
                 eval_obs = eval_env.reset()
                 eval_episode_return = 0
                 while not eval_done:
-                    eval_action = dqn_agent.select_action(eval_obs, epsilon=0)
+                    eval_action = dqn_agent.select_action(
+                        np.expand_dims(eval_obs, 0), epsilon=0
+                    )
                     eval_obs, eval_rew, eval_done, info = eval_env.step(eval_action)
                     eval_episode_return += eval_rew
                 all_eval_episode_return.append(eval_episode_return)
