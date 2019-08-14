@@ -17,9 +17,9 @@ For a reproducible run, use the RANDOM_SEED flag.
 python train_eval.py -c cartpole.conf --RANDOM_SEED=1
 ```
 
-To save a trained agent, use the SAVE_PATH flag.
+To save a trained agent, use the SAVE_DIR flag.
 ```
-python train_eval.py -c cartpole.conf --SAVE_PATH=saves/cartpole.pth
+python train_eval.py -c cartpole.conf --SAVE_DIR=saves/
 ```
 
 To load a trained agent, use the LOAD_PATH flag.
@@ -181,7 +181,7 @@ def get_config():
         type=int,
         help="How frequently (in environment steps) the agent will be evaluated.",
     )
-    parser.add("--SAVE_PATH", type=str, help="Save model to given file.")
+    parser.add("--SAVE_DIR", type=str, help="Save model to given directory.")
     parser.add("--LOAD_PATH", type=str, help="Load model from given file.")
     parser.add(
         "--USE_TENSORBOARD",
@@ -269,9 +269,9 @@ def main():
     # Load trained agent
     if CONFIG.LOAD_PATH:
         load_models(CONFIG.LOAD_PATH, q_net=q_net, optimizer=optimizer)
-    # Check if SAVE_PATH is defined
-    if not CONFIG.SAVE_PATH:
-        logger.warning("No save path specified: the model will be lost!")
+    # Check if SAVE_DIR is defined
+    if not CONFIG.SAVE_DIR:
+        logger.warning("No save directory specified: the model will be lost!")
 
     if CONFIG.USE_WANDB:
         wandb.watch(q_net)
@@ -364,9 +364,11 @@ def main():
             eval_episode_i += 1
 
     # Save trained agent
-    if CONFIG.SAVE_PATH:
-        save_models(CONFIG.SAVE_PATH, q_net=q_net, optimizer=optimizer)
-        logger.info(f"Model succesfully saved at {CONFIG.SAVE_PATH}")
+    if CONFIG.SAVE_DIR:
+        unique_save_dir = save_models(
+            CONFIG.SAVE_DIR, suffix="last", q_net=q_net, optimizer=optimizer
+        )
+        logger.info(f"Model succesfully saved at {unique_save_dir}")
 
 
 if __name__ == "__main__":

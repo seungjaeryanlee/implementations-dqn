@@ -17,10 +17,10 @@ For a reproducible run, use the RANDOM_SEED flag.
 python train_eval_atari.py -c space_invaders.conf --RANDOM_SEED=1
 ```
 
-With default config, the model is saved to `saves/space_invaders.pth`.
-To save in a different location, use the SAVE_PATH flag.
+With default config, the model is saved to `saves/`.
+To save in a different location, use the SAVE_DIR flag.
 ```
-python train_eval_atari.py -c space_invaders.conf --SAVE_PATH=saves/space_invaders.pth
+python train_eval_atari.py -c space_invaders.conf --SAVE_DIR=saves2/
 ```
 
 To load a trained agent, use the LOAD_PATH flag.
@@ -153,8 +153,8 @@ def main():
     # Load trained agent
     if CONFIG.LOAD_PATH:
         load_models(CONFIG.LOAD_PATH, q_net=q_net, optimizer=optimizer)
-    # Check if SAVE_PATH is defined
-    if not CONFIG.SAVE_PATH:
+    # Check if SAVE_DIR is defined
+    if not CONFIG.SAVE_DIR:
         logger.warning("No save path specified: the model will be lost!")
 
     if CONFIG.USE_WANDB:
@@ -249,9 +249,11 @@ def main():
             eval_episode_i += 1
 
     # Save trained agent
-    if CONFIG.SAVE_PATH:
-        save_models(CONFIG.SAVE_PATH, q_net=q_net, optimizer=optimizer)
-        logger.info(f"Model succesfully saved at {CONFIG.SAVE_PATH}")
+    if CONFIG.SAVE_DIR:
+        unique_save_dir = save_models(
+            CONFIG.SAVE_DIR, suffix="last", q_net=q_net, optimizer=optimizer
+        )
+        logger.info(f"Model succesfully saved at {unique_save_dir}")
 
 
 if __name__ == "__main__":
