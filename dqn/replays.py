@@ -166,11 +166,13 @@ class CircularReplayBuffer:
         assert maxlen > 0
 
         # Fill buffer with random transitions to make sure enough memory exists
+        # NOTE: env.observation.sample() doesn't work if low or high is np.inf
+        #       so we use zeros_like or ones_like.
         stub_transition = Transition(
-            env.observation_space.sample(),
+            np.zeros_like(env.observation_space.high),
             env.action_space.sample(),
             0,
-            env.observation_space.sample(),
+            np.ones_like(env.observation_space.high),
             False,
         )
         self.buffer = [None] * maxlen
