@@ -225,7 +225,7 @@ def main():
 
         # Evaluate agent periodically
         if step_i % CONFIG.EVAL_FREQUENCY == 0:
-            total_eval_episode_return = 0
+            all_eval_episode_return = []
 
             # Run multiple evaluation episodes
             for _ in range(CONFIG.EVAL_EPISODES):
@@ -239,8 +239,10 @@ def main():
                     )
                     eval_obs, eval_rew, eval_done, info = eval_env.step(eval_action)
                     eval_episode_return += eval_rew
-                total_eval_episode_return += eval_episode_return
-            avg_eval_episode_return = total_eval_episode_return / CONFIG.EVAL_EPISODES
+                all_eval_episode_return.append(eval_episode_return)
+            avg_eval_episode_return = (
+                sum(all_eval_episode_return) / CONFIG.EVAL_EPISODES
+            )
 
             # Log results
             logger.info(
@@ -252,10 +254,14 @@ def main():
                 writer.add_scalar(
                     "eval/avg_episode_return", avg_eval_episode_return, eval_i
                 )
+                writer.add_histogram("eval/episode_returns", all_eval_episode_return)
             if CONFIG.USE_WANDB:
                 wandb.log(
                     {
                         "Average Evaluation Episode Return": avg_eval_episode_return,
+                        "Evaluation Episode Returns": wandb.Histogram(
+                            all_eval_episode_return
+                        ),
                         "Evaluation Episode Count": eval_i,
                     },
                     step=step_i,
