@@ -269,6 +269,9 @@ def main():
     # Load trained agent
     if CONFIG.LOAD_PATH:
         load_models(CONFIG.LOAD_PATH, q_net=q_net, optimizer=optimizer)
+    # Check if SAVE_PATH is defined
+    if not CONFIG.SAVE_PATH:
+        logger.warning("No save path specified: the model will be lost!")
 
     if CONFIG.USE_WANDB:
         wandb.watch(q_net)
