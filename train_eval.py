@@ -53,6 +53,7 @@ rew : Reward
 """
 import configargparse
 import gym
+import numpy as np
 import torch
 import torch.optim as optim
 
@@ -372,7 +373,7 @@ def main():
                 writer.add_scalar(
                     "eval/avg_episode_return", avg_eval_episode_return, eval_i
                 )
-                writer.add_histogram("eval/episode_returns", all_eval_episode_return)
+                writer.add_histogram("eval/episode_returns", np.array(all_eval_episode_return))
             if CONFIG.USE_WANDB:
                 wandb.log(
                     {
