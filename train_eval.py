@@ -242,21 +242,6 @@ def train_eval(dqn_agent, replay_buffer, env, eval_env, device, logger, CONFIG):
         wandb.init(project="implementations-dqn", config=CONFIG)
         wandb.watch(dqn_agent.q_net)
 
-    # Fix random seeds
-    if CONFIG.RANDOM_SEED is not None:
-        # NOTE(seungjaeryanlee): Seed for env and eval_env should be different
-        make_reproducible(CONFIG.RANDOM_SEED, use_numpy=True, use_torch=True)
-        env.seed(CONFIG.RANDOM_SEED + 1)
-        env.observation_space.seed(CONFIG.RANDOM_SEED + 2)
-        env.action_space.seed(CONFIG.RANDOM_SEED + 3)
-        eval_env.seed(CONFIG.RANDOM_SEED + 4)
-        eval_env.observation_space.seed(CONFIG.RANDOM_SEED + 5)
-        eval_env.action_space.seed(CONFIG.RANDOM_SEED + 6)
-    else:
-        logger.warning("Running without a random seed: this run is NOT reproducible.")
-
-    obs = env.reset()
-
     # Check if SAVE_DIR is defined
     if not CONFIG.SAVE_DIR:
         logger.warning("No save directory specified: the model will be lost!")
@@ -275,6 +260,7 @@ def train_eval(dqn_agent, replay_buffer, env, eval_env, device, logger, CONFIG):
     episode_return = 0
     episode_i = 0
     eval_i = 0
+    obs = env.reset()
     for step_i in range(CONFIG.ENV_STEPS + 1):
         # Interact with the environment and save the experience
         epsilon = get_epsilon(step_i)
@@ -424,6 +410,19 @@ def main():
     # Setup environment
     env = gym.make(CONFIG.ENV_NAME)
     eval_env = gym.make(CONFIG.ENV_NAME)
+
+    # Fix random seeds
+    if CONFIG.RANDOM_SEED is not None:
+        # NOTE(seungjaeryanlee): Seed for env and eval_env should be different
+        make_reproducible(CONFIG.RANDOM_SEED, use_numpy=True, use_torch=True)
+        env.seed(CONFIG.RANDOM_SEED + 1)
+        env.observation_space.seed(CONFIG.RANDOM_SEED + 2)
+        env.action_space.seed(CONFIG.RANDOM_SEED + 3)
+        eval_env.seed(CONFIG.RANDOM_SEED + 4)
+        eval_env.observation_space.seed(CONFIG.RANDOM_SEED + 5)
+        eval_env.action_space.seed(CONFIG.RANDOM_SEED + 6)
+    else:
+        logger.warning("Running without a random seed: this run is NOT reproducible.")
 
     # Setup agent and replay buffer
     q_net = QNetwork(env.observation_space.shape[0], env.action_space.n).to(device)

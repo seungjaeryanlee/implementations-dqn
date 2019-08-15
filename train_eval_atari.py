@@ -98,6 +98,19 @@ def main():
     env = FrameStack(env, stack_size=CONFIG.FRAME_STACK)
     eval_env = FrameStack(eval_env, stack_size=CONFIG.FRAME_STACK)
 
+    # Fix random seeds
+    if CONFIG.RANDOM_SEED is not None:
+        # NOTE(seungjaeryanlee): Seed for env and eval_env should be different
+        make_reproducible(CONFIG.RANDOM_SEED, use_numpy=True, use_torch=True)
+        env.seed(CONFIG.RANDOM_SEED + 1)
+        env.observation_space.seed(CONFIG.RANDOM_SEED + 2)
+        env.action_space.seed(CONFIG.RANDOM_SEED + 3)
+        eval_env.seed(CONFIG.RANDOM_SEED + 4)
+        eval_env.observation_space.seed(CONFIG.RANDOM_SEED + 5)
+        eval_env.action_space.seed(CONFIG.RANDOM_SEED + 6)
+    else:
+        logger.warning("Running without a random seed: this run is NOT reproducible.")
+
     # Setup agent and replay buffer
     q_net = AtariQNetwork(CONFIG.FRAME_STACK, env.action_space.n).to(device)
     optimizer = optim.RMSprop(
