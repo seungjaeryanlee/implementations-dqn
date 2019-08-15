@@ -61,7 +61,7 @@ from dqn.networks import AtariQNetwork
 from dqn.replays import NATUREDQN_ATARI_PREPROCESS_BATCH, CircularReplayBuffer
 from environments import AtariPreprocessing, FrameStack
 from train_eval import get_config, train_eval
-from utils import get_logger, load_models
+from utils import get_logger, load_models, make_reproducible
 
 
 def main():
