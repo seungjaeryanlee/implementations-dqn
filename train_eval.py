@@ -65,8 +65,9 @@ from utils import (
     get_logger,
     get_timestamp,
     load_models,
-    make_reproducible,
     save_models,
+    set_env_random_seeds,
+    set_global_random_seeds,
 )
 
 
@@ -413,14 +414,10 @@ def main():
 
     # Fix random seeds
     if CONFIG.RANDOM_SEED is not None:
-        # NOTE(seungjaeryanlee): Seed for env and eval_env should be different
-        make_reproducible(CONFIG.RANDOM_SEED, use_numpy=True, use_torch=True)
-        env.seed(CONFIG.RANDOM_SEED + 1)
-        env.observation_space.seed(CONFIG.RANDOM_SEED + 2)
-        env.action_space.seed(CONFIG.RANDOM_SEED + 3)
-        eval_env.seed(CONFIG.RANDOM_SEED + 4)
-        eval_env.observation_space.seed(CONFIG.RANDOM_SEED + 5)
-        eval_env.action_space.seed(CONFIG.RANDOM_SEED + 6)
+        set_global_random_seeds(CONFIG.RANDOM_SEED, use_numpy=True, use_torch=True)
+        # NOTE(seungjaeryanlee): Seed for env and eval_env are different for fair evaluation
+        set_env_random_seeds(env, CONFIG.RANDOM_SEED)
+        set_env_random_seeds(eval_env, CONFIG.RANDOM_SEED + 1)
     else:
         logger.warning("Running without a random seed: this run is NOT reproducible.")
 
