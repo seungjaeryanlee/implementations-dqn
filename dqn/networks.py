@@ -1,4 +1,7 @@
-"""Define necessary neural networks."""
+"""Define necessary neural networks.
+
+To match ReLU activations, we use Kaiming He initialization.
+"""
 import torch
 import torch.nn as nn
 
@@ -24,6 +27,13 @@ class QNetwork(nn.Module):
             nn.ReLU(),
             nn.Linear(128, out_dim),
         )
+
+        def weights_init(m):
+            if isinstance(m, nn.Linear):
+                torch.nn.init.kaiming_uniform_(m.weight)
+                torch.nn.init.zeros_(m.bias)
+
+        self.layers.apply(weights_init)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward propagation.
@@ -66,6 +76,14 @@ class AtariQNetwork(nn.Module):
         self.fc_layers = nn.Sequential(
             nn.Linear(3136, 512), nn.ReLU(), nn.Linear(512, out_dim)
         )
+
+        def weights_init(m):
+            if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
+                torch.nn.init.kaiming_uniform_(m.weight)
+                torch.nn.init.zeros_(m.bias)
+
+        self.conv_layers.apply(weights_init)
+        self.fc_layers.apply(weights_init)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward propagation.
