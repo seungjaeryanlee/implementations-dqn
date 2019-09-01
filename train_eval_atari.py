@@ -72,7 +72,8 @@ def main():
     # Log to File and Console
     logger = get_logger(log_to_console=True, log_to_file=CONFIG.LOG_TO_FILE)
 
-    # Choose CPU or GPU
+    # Choose CPU and GPU
+    torch.set_num_threads(CONFIG.CPU_THREADS)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     if not torch.cuda.is_available():
         logger.warning("GPU not available: this run could be slow.")
