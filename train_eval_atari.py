@@ -92,10 +92,10 @@ def main():
     env = AtariPreprocessing(
         env, frame_skip=CONFIG.FRAME_SKIP, terminal_on_life_loss=True
     )
-    # NOTE(seungjaeryanlee): In evaluation, episode does not end in life loss or have NOOP operations
+    # NOTE(seungjaeryanlee): In evaluation, episode does not end in life loss
     # https://github.com/deepmind/dqn/blob/9d9b1d13a2b491d6ebd4d046740c511c662bbe0f/dqn/train_agent.lua#L119  # noqa: B950
     eval_env = AtariPreprocessing(
-        eval_env, noop_max=0, frame_skip=CONFIG.FRAME_SKIP, terminal_on_life_loss=False
+        eval_env, frame_skip=CONFIG.FRAME_SKIP, terminal_on_life_loss=False
     )
     # Stack frames to create observation
     env = FrameStack(env, stack_size=CONFIG.FRAME_STACK)
