@@ -8,6 +8,7 @@ from gym.spaces import Box
 from gym.wrappers import TimeLimit
 
 
+# NOTE(seungjaeryanlee): Modified to allow noop_max=0
 class AtariPreprocessing(gym.Wrapper):
     r"""Atari 2600 preprocessings. 
     This class follows the guidelines in 
@@ -106,14 +107,16 @@ class AtariPreprocessing(gym.Wrapper):
         return self._get_obs(), R, done, info
 
     def reset(self, **kwargs):
-        # NoopReset
         self.env.reset(**kwargs)
-        noops = self.env.unwrapped.np_random.randint(1, self.noop_max + 1)
-        assert noops > 0
-        for _ in range(noops):
-            _, _, done, _ = self.env.step(0)
-            if done:
-                self.env.reset(**kwargs)
+
+        # NoopReset
+        if self.noop_max > 0:
+            noops = self.env.unwrapped.np_random.randint(1, self.noop_max + 1)
+            assert noops > 0
+            for _ in range(noops):
+                _, _, done, _ = self.env.step(0)
+                if done:
+                    self.env.reset(**kwargs)
 
         # FireReset
         action_meanings = self.env.unwrapped.get_action_meanings()
