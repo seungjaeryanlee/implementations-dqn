@@ -14,7 +14,7 @@ Transition = namedtuple("Transition", ["obs", "action", "rew", "next_obs", "done
 def NATUREDQN_ATARI_PREPROCESS_BATCH(o, a, r, n, d):
     """Preprocessing according to Nature DQN paper."""
     o, a, r, n, d = NORMALIZE_OBSERVATION(o, a, r, n, d)
-    o, a, r, n, d = CLIP_REWARD(o, a, r, n, d)
+    o, a, r, n, d = FIXED_MAGNITUDE_REWARD(o, a, r, n, d)
 
     return o, a, r, n, d
 
@@ -27,6 +27,16 @@ def NORMALIZE_OBSERVATION(obs_b, action_b, rew_b, next_obs_b, done_b):
 # NOTE(seungjaeryanlee): We use preprocessing in replay buffer instead of
 #                        environment wrapper to allow for correct training
 #                        environment episodic return.
+def FIXED_MAGNITUDE_REWARD(obs_b, action_b, rew_b, next_obs_b, done_b):
+    """Transform reward to be magnitude agnostic: -1, 0, or 1."""
+    rew_b = np.divide(
+        rew_b, np.abs(rew_b), out=np.zeros_like(rew_b), where=np.abs(rew_b) != 0
+    )
+    return obs_b, action_b, rew_b, next_obs_b, done_b
+
+
+# NOTE(seungjaeryanlee): This is not used, but is added here to highlight the
+#                        difference from FIXED_MAGNITUDE_REWARD().
 def CLIP_REWARD(obs_b, action_b, rew_b, next_obs_b, done_b):
     """Clip rewards to be between [-1, 1]."""
     return obs_b, action_b, np.clip(rew_b, -1, 1), next_obs_b, done_b
