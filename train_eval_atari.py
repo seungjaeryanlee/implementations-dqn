@@ -6,31 +6,31 @@ https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf
 
 Running
 -------
-You can train the DQN agent on Atari Space Invaders with the inluded
+You can train the DQN agent on Atari Pong with the inluded
 configuration file with the below command:
 ```
-python train_eval_atari.py -c space_invaders.conf
+python train_eval_atari.py -c pong.conf
 ```
 
 For a reproducible run, use the RANDOM_SEED flag.
 ```
-python train_eval_atari.py -c space_invaders.conf --RANDOM_SEED=1
+python train_eval_atari.py -c pong.conf --RANDOM_SEED=1
 ```
 
 With default config, the model is saved to `saves/`.
 To save in a different location, use the SAVE_DIR flag.
 ```
-python train_eval_atari.py -c space_invaders.conf --SAVE_DIR=saves2/
+python train_eval_atari.py -c pong.conf --SAVE_DIR=saves2/
 ```
 
 To load a trained agent, use the LOAD_PATH flag.
 ```
-python train_eval_atari.py -c space_invaders.conf --LOAD_PATH=saves/space_invaders.pth
+python train_eval_atari.py -c pong.conf --LOAD_PATH=saves/pong.pth
 ```
 
 To enable logging to TensorBoard or W&B, use appropriate flags.
 ```
-python train_eval_atari.py -c space_invaders.conf --USE_TENSORBOARD --USE_WANDB
+python train_eval_atari.py -c pong.conf --USE_TENSORBOARD --USE_WANDB
 ```
 
 
