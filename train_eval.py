@@ -81,9 +81,9 @@ def get_config():
         help="Full name of the environment, including the mode and version number.",
     )
     parser.add(
-        "--ENV_STEPS",
+        "--ENV_FRAMES",
         type=int,
-        help="Number of environment steps to train the agent on.",
+        help="Number of environment frames to train the agent on. Divide by FRAME_SKIP to get ENV_STEPS.",
     )
     parser.add(
         "--FRAME_STACK",
@@ -132,9 +132,9 @@ def get_config():
         help="Terminal value of a linearly annealing epsilon.",
     )
     parser.add(
-        "--EPSILON_DURATION",
+        "--EPSILON_DURATION_FRAMES",
         type=int,
-        help="The duration of linear annealing for epsilon",
+        help="The duration of linear annealing for epsilon in frames.",
     )
     parser.add(
         "--RANDOM_SEED",
@@ -216,6 +216,10 @@ def get_config():
         CONFIG.USE_TENSORBOARD = False
     if not hasattr(CONFIG, "USE_WANDB"):
         CONFIG.USE_WANDB = False
+
+    # Use CONFIG.FRAME_SKIP
+    CONFIG.ENV_STEPS = CONFIG.ENV_FRAMES // CONFIG.FRAME_SKIP
+    CONFIG.EPSILON_DURATION = CONFIG.EPSILON_DURATION_FRAMES // CONFIG.FRAME_SKIP
 
     print()
     print("+--------------------------------+--------------------------------+")
