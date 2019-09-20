@@ -83,7 +83,7 @@ def get_config():
     parser.add(
         "--ENV_FRAMES",
         type=int,
-        help="Number of environment frames to train the agent on. Divide by FRAME_SKIP to get ENV_STEPS.",
+        help='Number of environment "frames" (not steps!) to train the agent on.',
     )
     parser.add(
         "--FRAME_STACK",
@@ -122,19 +122,24 @@ def get_config():
         help="Discount factor that scales future rewards. Denoted with gamma",
     )
     parser.add(
-        "--EPSILON_START",
+        "--EPSILON_DECAY_START_VALUE",
         type=float,
-        help="Starting value of a linearly annealing epsilon.",
+        help="Starting value of decaying epsilon.",
     )
     parser.add(
-        "--EPSILON_END",
+        "--EPSILON_DECAY_END_VALUE",
         type=float,
-        help="Terminal value of a linearly annealing epsilon.",
+        help="Terminal value of decaying epsilon.",
     )
     parser.add(
-        "--EPSILON_DURATION_FRAMES",
+        "--EPSILON_DECAY_START_STEP",
         type=int,
-        help="The duration of linear annealing for epsilon in frames.",
+        help="The step to start epsilon decay. Epsilon before this step is EPSILON_START.",
+    )
+    parser.add(
+        "--EPSILON_DECAY_END_STEP",
+        type=int,
+        help="The step to end epsilon decay. Epsilon after this step is EPSILON_END.",
     )
     parser.add(
         "--RANDOM_SEED",
@@ -217,9 +222,9 @@ def get_config():
     if not hasattr(CONFIG, "USE_WANDB"):
         CONFIG.USE_WANDB = False
 
-    # Use CONFIG.FRAME_SKIP
+    # Convert ENV_FRAMES to ENV_STEPS
+    # TODO(seungjaeryanlee): Do I divide EPSILON_DECAY_START_STEPS / END_STEPS?
     CONFIG.ENV_STEPS = CONFIG.ENV_FRAMES // CONFIG.FRAME_SKIP
-    CONFIG.EPSILON_DURATION = CONFIG.EPSILON_DURATION_FRAMES // CONFIG.FRAME_SKIP
 
     print()
     print("+--------------------------------+--------------------------------+")
@@ -261,7 +266,10 @@ def train_eval(dqn_agent, replay_buffer, env, eval_env, device, logger, CONFIG):
 
     # Setup epsilon decay function
     get_epsilon = get_linear_anneal_func(
-        CONFIG.EPSILON_START, CONFIG.EPSILON_END, CONFIG.EPSILON_DURATION
+        start_value=CONFIG.EPSILON_DECAY_START_VALUE,
+        end_value=CONFIG.EPSILON_DECAY_END_VALUE,
+        start_step=CONFIG.EPSILON_DECAY_START_STEP,
+        end_step=CONFIG.EPSILON_DECAY_END_STEP,
     )
 
     # Main training loop
