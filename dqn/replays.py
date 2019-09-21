@@ -35,10 +35,7 @@ def CLIP_REWARD(obs_b, action_b, rew_b, next_obs_b, done_b):
 # NOTE(seungjaeryanlee): This is used in the 2013 version (Mnih et al., 2013).
 def FIXED_MAGNITUDE_REWARD(obs_b, action_b, rew_b, next_obs_b, done_b):
     """Transform reward to be magnitude agnostic: -1, 0, or 1."""
-    rew_b = np.divide(
-        rew_b, np.abs(rew_b), out=np.zeros_like(rew_b), where=np.abs(rew_b) != 0
-    )
-    return obs_b, action_b, rew_b, next_obs_b, done_b
+    return obs_b, action_b, np.sign(rew_b), next_obs_b, done_b
 
 
 class ReplayBuffer:
