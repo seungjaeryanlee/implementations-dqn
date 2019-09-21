@@ -231,11 +231,11 @@ def get_config():
     print("| Hyperparameters                | Value                          |")
     print("+--------------------------------+--------------------------------+")
     for arg in vars(CONFIG):
-        print(
-            "| {:30} | {:<30} |".format(
-                arg, getattr(CONFIG, arg) if getattr(CONFIG, arg) is not None else ""
-            )
-        )
+        attr = getattr(CONFIG, arg) if getattr(CONFIG, arg) is not None else ""
+        if type(attr) == bool:
+            attr = "True" if attr else "False"
+
+        print("| {:30} | {:<30} |".format(arg, attr))
     print("+--------------------------------+--------------------------------+")
     print()
 
@@ -343,7 +343,7 @@ def train_eval(dqn_agent, replay_buffer, env, eval_env, device, logger, CONFIG):
             episode_i += 1
 
         # Evaluate agent periodically
-        if step_i % CONFIG.EVAL_FREQUENCY == 0:
+        if step_i % CONFIG.EVAL_FREQUENCY == 0 and CONFIG.EVAL_EPISODES > 0:
             all_eval_episode_return = []
 
             # Run multiple evaluation episodes
@@ -356,12 +356,10 @@ def train_eval(dqn_agent, replay_buffer, env, eval_env, device, logger, CONFIG):
                     eval_action = dqn_agent.select_action(
                         np.expand_dims(eval_obs, 0), epsilon=CONFIG.EVAL_EPSILON
                     )
-                    eval_obs, eval_rew, eval_done, info = eval_env.step(eval_action)
+                    eval_obs, eval_rew, eval_done, _ = eval_env.step(eval_action)
                     eval_episode_return += eval_rew
                 all_eval_episode_return.append(eval_episode_return)
-            avg_eval_episode_return = (
-                sum(all_eval_episode_return) / CONFIG.EVAL_EPISODES
-            )
+            avg_eval_episode_return = np.mean(all_eval_episode_return)
 
             # Log results
             logger.info(
