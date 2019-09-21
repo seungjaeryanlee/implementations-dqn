@@ -100,11 +100,14 @@ class DQNAgent:
         assert target.shape == (len(obs_b), 1)
         assert prediction.shape == (len(obs_b), 1)
 
-        td_loss = F.smooth_l1_loss(prediction, target)
+        # NOTE(seungjaeryanlee): F.smooth_l1_loss is NOT the equivalent. (by scale of 2)
+        # TODO(seungjaeryanlee): Add more details in comments.
+        td_loss = F.mse_loss(prediction, target)
         assert td_loss.shape == ()
 
         self.optimizer.zero_grad()
         td_loss.backward()
+        nn.utils.clip_grad_norm_(self.q_net.parameters(), 1)
         self.optimizer.step()
 
         return td_loss.item()
