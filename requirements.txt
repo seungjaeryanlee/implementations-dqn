@@ -2,6 +2,7 @@
 ConfigArgParse==0.14.0
 
 # OpenAI Gym is de-facto standard for RL agent-environment interface.
+# Note that Atari environments are not installed by default: run `pip install gym[atari]`.
 gym==0.14.0
 
 # PyTorch v1.1+ supports TensorBoard, and in v1.2 TensorBoard is no longer experimenteal.
