@@ -310,7 +310,7 @@ def train_eval(dqn_agent, replay_buffer, env, eval_env, device, logger, CONFIG):
         # of parameter updates, which is dependent on UPDATE_FREQUENCY. However, in
         # the code the frequency is measured in number of perceived states. We follow
         #  the latter.
-        # https://github.com/deepmind/dqn/blob/9d9b1d13a2b491d6ebd4d046740c511c662bbe0f/dqn/NeuralQLearner.lua#L356  # noqa: B950
+        # https://github.com/deepmind/dqn/blob/9d9b1d1/dqn/NeuralQLearner.lua#L356
         if step_i % CONFIG.TARGET_NET_UPDATE_FREQUENCY == 0:
             dqn_agent.update_target_q_net()
 
